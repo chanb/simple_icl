@@ -19,7 +19,12 @@ CONST_MASK_NAMES = "mask_names"
 CONST_LINEAR_WARMUP_SQRT_DECAY = "linear_warmup_sqrt_decay"
 
 # Model
+CONST_GPT = "gpt"
+CONST_PREDICTOR = "predictor"
+CONST_INPUT_TOKENIZER = "input_tokenizer"
+CONST_OUTPUT_TOKENIZER = "output_tokenizer"
 CONST_SAME_PADDING = "SAME"
+CONST_POSITIONAL_ENCODING = "positional_encoding"
 
 # Learning
 CONST_AUX = "aux"
