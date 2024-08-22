@@ -24,9 +24,8 @@ import timeit
 from local.utils import *
 
 from src.constants import *
-from src.dataset import get_dataset
-from src.models import load_config, iterate_models
-from src.utils import parse_dict
+from src.dataset import get_data_loader
+from src.utils import parse_dict, load_config, iterate_models
 
 
 def get_eval_datasets(
@@ -43,7 +42,7 @@ def get_eval_datasets(
         if split == "test":
 
             def modify_seed(config_dict):
-                config_dict["learner_config"]["seeds"]["data_seed"] = test_data_seed
+                config_dict["data_seed"] = test_data_seed
 
         else:
 
@@ -54,9 +53,7 @@ def get_eval_datasets(
         modify_seed(icl_iid_context_config_dict)
         dataset_kwargs = {"mode": "iid_context"}
 
-        icl_iid_context_config_dict["learner_config"]["dataset_config"][
-            "dataset_kwargs"
-        ].update(dataset_kwargs)
+        icl_iid_context_config_dict["dataset_kwargs"].update(dataset_kwargs)
         icl_iid_context = parse_dict(icl_iid_context_config_dict)
 
         configs[f"{split}-icl_iid_context"] = icl_iid_context
@@ -75,9 +72,7 @@ def get_eval_datasets(
                         "flip_label": flip_label,
                     }
 
-                    start_pos_config_dict["learner_config"]["dataset_config"][
-                        "dataset_kwargs"
-                    ].update(dataset_kwargs)
+                    start_pos_config_dict["dataset_kwargs"].update(dataset_kwargs)
 
                     start_pos_config = parse_dict(start_pos_config_dict)
                     configs[
@@ -90,8 +85,7 @@ def get_eval_datasets(
                     ] = start_pos_config
 
     return {
-        eval_name: get_data_loader(config, config.learner_config.seeds.data_seed)
-        for eval_name, config in configs.items()
+        eval_name: get_data_loader(config) for eval_name, config in configs.items()
     }, configs
 
 
@@ -102,15 +96,14 @@ def main(args: SimpleNamespace):
     test_data_seed = args.test_data_seed
 
     config_dict, config = load_config(learner_path)
-    config_dict["learner_config"]["batch_size"] = batch_size
+    config_dict["batch_size"] = batch_size
     config = parse_dict(config_dict)
 
-    train_dataset = get_dataset(
-        config.learner_config.dataset_config,
-        config.learner_config.seeds.data_seed,
+    train_data_loader, train_dataset = get_data_loader(
+        config,
     )
 
-    context_len = config.model_config.num_contexts
+    context_len = config.dataset_kwargs.num_examples
     fixed_length = True
 
     datasets, dataset_configs = get_eval_datasets(
@@ -119,18 +112,18 @@ def main(args: SimpleNamespace):
         context_len,
     )
     datasets["pretraining"] = (
+        train_data_loader,
         train_dataset,
-        train_dataset.get_dataloader(config.learner_config),
     )
-    dataset_configs["pretraining"] = config.learner_config.dataset_config
+    dataset_configs["pretraining"] = config.dataset_kwargs
 
     prefetched_data = {}
     for eval_name in tqdm(datasets, postfix="Prefetching data"):
-        dataset, data_loader = datasets[eval_name]
+        data_loader, dataset = datasets[eval_name]
         data_iter = iter(data_loader)
         prefetched_data[eval_name] = dict(
             samples=[next(data_iter) for _ in range(num_eval_samples // batch_size)],
-            dataset_output_dim=dataset.output_dim[0],
+            dataset_output_dim=dataset.output_space.n,
         )
 
     accuracies = {eval_name: [] for eval_name in datasets}

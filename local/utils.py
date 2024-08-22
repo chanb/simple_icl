@@ -1,5 +1,16 @@
-from jaxl.constants import *
-from jaxl.datasets import get_dataset
+import inspect
+import os
+import sys
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+srcdir = os.path.join(os.path.dirname(parentdir), "src")
+sys.path.insert(0, parentdir)
+sys.path.insert(0, srcdir)
+
+import src.models as models
+
+from src.constants import *
 
 import jax
 import matplotlib.pyplot as plt
@@ -18,25 +29,10 @@ def get_preds_labels(model, params, prefetched_data, max_label=None):
     all_outputs = []
     num_query_class_in_context = []
 
-    for batch_i, data in enumerate(prefetched_data["samples"]):
-        context_inputs = data["context_inputs"]
-        context_outputs = data["context_outputs"]
-        queries = data["queries"]
-        one_hot_labels = data["outputs"]
-
-        if hasattr(context_inputs, "numpy"):
-            context_inputs = context_inputs.numpy()
-            context_outputs = context_outputs.numpy()
-            queries = queries.numpy()
-            one_hot_labels = one_hot_labels.numpy()
-
-        outputs, _, _ = model.forward(
+    for batch_i, batch in enumerate(prefetched_data["samples"]):
+        outputs, updates = model.forward(
             params[CONST_MODEL_DICT][CONST_MODEL],
-            queries,
-            {
-                CONST_CONTEXT_INPUT: context_inputs,
-                CONST_CONTEXT_OUTPUT: context_outputs,
-            },
+            batch,
             eval=True,
         )
 
@@ -44,7 +40,10 @@ def get_preds_labels(model, params, prefetched_data, max_label=None):
             preds = np.argmax(outputs, axis=-1)
         else:
             preds = np.argmax(outputs[..., :max_label], axis=-1)
-        labels = np.argmax(one_hot_labels, axis=-1)
+
+        context_outputs = batch["target"][:, :-1]
+        targets = batch["target"][:, -1]
+        labels = np.argmax(targets, axis=-1)
         all_preds.append(preds)
         all_labels.append(labels)
         all_outputs.append(outputs)
@@ -84,24 +83,6 @@ def print_performance_with_aux(
     }
 
     return auxes
-
-
-# Get dataloader
-def get_data_loader(
-    config,
-    seed,
-    visualize=False,
-):
-    dataset = get_dataset(
-        config.learner_config.dataset_config,
-        seed,
-    )
-
-    if visualize:
-        plot_examples(dataset)
-
-    data_loader = dataset.get_dataloader(config.learner_config)
-    return dataset, data_loader
 
 
 # Complete evaluation
