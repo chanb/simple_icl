@@ -134,6 +134,7 @@ class InContextSupervisedTransformer(Model):
         widening_factor: int,
         query_pred_only: bool = False,
         input_output_same_encoding: bool = True,
+        freeze_input_tokenizer: bool = True,
         **kwargs,
     ) -> None:
         self.gpt = GPTModule(
@@ -152,6 +153,7 @@ class InContextSupervisedTransformer(Model):
         )
         self.num_heads = num_heads
         self.embed_dim = embed_dim
+        self.freeze_input_tokenizer = freeze_input_tokenizer
         self.apply_positional_encoding = self._make_get_positional_encoding(
             input_output_same_encoding
         )
@@ -249,8 +251,10 @@ class InContextSupervisedTransformer(Model):
         dummy_token = np.zeros((1, 1, self.embed_dim))
         dummy_repr = np.zeros((1, 1, self.embed_dim))
         return {
-            CONST_INPUT_TOKENIZER: self.input_tokenizer.init(
-                input_key, input_space.sample()[None]
+            CONST_INPUT_TOKENIZER: (
+                jnp.eye(self.embed_dim)
+                if self.freeze_input_tokenizer
+                else self.input_tokenizer.init(input_key, input_space.sample()[None])
             ),
             CONST_OUTPUT_TOKENIZER: self.output_tokenizer.init(
                 output_key, np.zeros(output_space.n)[None]
