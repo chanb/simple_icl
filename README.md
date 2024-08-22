@@ -4,7 +4,7 @@
 Python 3.10
 ```
 pip install jax==0.4.30
-pip install chex flax optax dill gymnasium
+pip install chex flax optax dill gymnasium scikit-learn
 pip install tensorflow tensorflow_datasets torch
 ```
 

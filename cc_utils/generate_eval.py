@@ -58,7 +58,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += 'echo "Running on hostname `hostname`"\n'
     sbatch_content += "echo ${learner_path}\n"
     sbatch_content += 'echo "Starting run at: `date`"\n'
-    sbatch_content += "python3 {}/experiments/cc_utils/evaluation.py \\\n".format(
+    sbatch_content += "python3 {}/cc_utils/evaluation.py \\\n".format(
         REPO_PATH
     )
     sbatch_content += "  --learner_path=${learner_path} \n"

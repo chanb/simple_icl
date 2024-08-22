@@ -91,7 +91,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += 'echo "Running on hostname `hostname`"\n'
     sbatch_content += "echo ${config_path}\n"
     sbatch_content += 'echo "Starting run at: `date`"\n'
-    sbatch_content += "python3 {}/main.py \\\n".format(REPO_PATH)
+    sbatch_content += "python3 {}/src/main.py \\\n".format(REPO_PATH)
     sbatch_content += "  --config_path=${config_path} \n"
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 

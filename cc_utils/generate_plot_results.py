@@ -79,7 +79,7 @@ sbatch_content += 'echo "Current working directory is `pwd`"\n'
 sbatch_content += 'echo "Running on hostname `hostname`"\n'
 sbatch_content += "echo ${learner_path}\n"
 sbatch_content += 'echo "Starting run at: `date`"\n'
-sbatch_content += "python3 {}/experiments/cc_utils/plot_results.py \\\n".format(
+sbatch_content += "python3 {}/cc_utils/plot_results.py \\\n".format(
     REPO_PATH
 )
 sbatch_content += "  --results_dir=${results_dir} \\\n"
