@@ -213,6 +213,7 @@ class InContextLearner:
             f"time/{CONST_SAMPLE_TIME}": total_sample_time,
             f"time/{CONST_UPDATE_TIME}": total_update_time,
             f"{CONST_GRAD_NORM}/model": auxes[CONST_GRAD_NORM][CONST_MODEL].item(),
+            f"{CONST_PARAM_NORM}/model": l2_norm(self.model_dict[CONST_MODEL]).item(),
         }
 
         if isinstance(self._model_dict[CONST_OPT_STATE], dict):
