@@ -4,7 +4,9 @@ import sys
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
+srcdir = os.path.join(os.path.dirname(parentdir), "src")
 sys.path.insert(0, parentdir)
+sys.path.insert(0, srcdir)
 
 import warnings
 
@@ -19,11 +21,6 @@ import argparse
 import copy
 import timeit
 
-from jaxl.constants import *
-from jaxl.datasets import get_dataset
-from jaxl.models import load_config, iterate_models
-from jaxl.utils import parse_dict
-
 from cc_utils.utils import *
 from cc_utils.constants import (
     CONFIG_DIR,
@@ -32,6 +29,11 @@ from cc_utils.constants import (
     REPO_PATH,
     CC_ACCOUNT,
 )
+
+from src.constants import *
+from src.dataset import get_dataset
+from src.models import load_config, iterate_models
+from src.utils import parse_dict
 
 
 def get_eval_datasets(

@@ -7,8 +7,10 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 from types import SimpleNamespace
-from typing import Any, Dict, Iterator, Union
+from typing import Any, Dict, Iterator, Union, Tuple, Iterable
 
+import dill
+import json
 import numpy as np
 import random
 
@@ -76,6 +78,44 @@ def flatten_dict(d: Union[Dict, Any], label: str = None) -> Iterator:
             yield from flatten_dict(v, k if label is None else f"{label}.{k}")
     else:
         yield (label, d)
+
+
+def load_config(learner_path) -> Tuple[Dict, SimpleNamespace]:
+    """
+    Loads the configuration file of an experiment
+
+    :param learner_path: the path that stores the experiment configuation
+    :type learner_path: str
+    :return: the experiment configuration
+    :rtype: Tuple[Dict, SimpleNamespace]
+
+    """
+    config_path = os.path.join(learner_path, "config.json")
+    with open(config_path, "r") as f:
+        config_dict = json.load(f)
+        config = parse_dict(config_dict)
+
+    return config_dict, config
+
+
+def iterate_models(
+    learner_path: str,
+) -> Iterable:
+    """
+    An iterator that yields the model and the each checkpointed parameters
+
+    :param learner_path: the path that stores the experiment configuation
+    :type learner_path: str
+    :return: an iterable of the model, the parameters, and the i'th checkpoint
+    :rtype: Iterable
+    """
+
+    model = dill.load(open(os.path.join(learner_path, "architecture.dill"), "rb"))
+
+    all_steps = sorted(os.listdir(os.path.join(learner_path, "models")))
+    for step in all_steps:
+        params = dill.load(open(os.path.join(learner_path, "models", step), "rb"))
+        yield params, model, int(step.split(".dill")[0])
 
 
 class DummySummaryWriter:

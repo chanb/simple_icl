@@ -75,9 +75,7 @@ def get_scheduler(
             kwargs.warmup_steps,
         )
     else:
-        return getattr(optax, scheduler_config.scheduler)(
-            **vars(kwargs)
-        )
+        return getattr(optax, scheduler_config.scheduler)(**vars(kwargs))
 
 
 def get_optimizer(
@@ -113,8 +111,7 @@ def get_optimizer(
 
         opt_transforms.append(
             optax.inject_hyperparams(getattr(optax, opt_config.optimizer))(
-                get_scheduler(opt_config.lr),
-                **vars(opt_config.opt_kwargs)
+                get_scheduler(opt_config.lr), **vars(opt_config.opt_kwargs)
             )
         )
 

@@ -17,7 +17,7 @@ class TFDataset:
     @property
     def dataset(self):
         return self._dataset
-    
+
     @property
     def input_space(self):
         return self._input_space
@@ -107,7 +107,7 @@ class StreamBlockBiUniform:
     @property
     def input_space(self):
         return spaces.Box(-np.inf, np.inf, shape=(self.num_dims,))
-    
+
     @property
     def output_space(self):
         return spaces.Discrete(2)
@@ -363,9 +363,7 @@ def get_dataset(
             "label": tf.TensorSpec(
                 shape=(num_examples + 1, num_classes), dtype=tf.dtypes.int32
             ),
-            "flip_label": tf.TensorSpec(
-                shape=[], dtype=tf.dtypes.int32
-            ),
+            "flip_label": tf.TensorSpec(shape=[], dtype=tf.dtypes.int32),
         },
     )
     return TFDataset(
@@ -386,7 +384,6 @@ def prepare_seqs_for_icl(ds, num_classes: int):
         targets = tf.cast(example["label"], tf.int32)  # (B,SS)
 
         flip_labels = tf.cast(example["flip_label"], tf.int32)
-
 
         # Just use the original sequence of labels, e.g. [label, label, ...]
         is_one_hot = targets.shape[-1] == num_classes
@@ -431,9 +428,7 @@ def get_data_loader(config: SimpleNamespace) -> Any:
     ds_seqs = dataset.dataset
 
     shuffle_buffer_size = config.shuffle_buffer_size
-    ds = ds_seqs.batch(config.batch_size).prefetch(
-        config.num_workers
-    )
+    ds = ds_seqs.batch(config.batch_size).prefetch(config.num_workers)
     ds = prepare_seqs_for_icl(
         ds,
         dataset.output_space.n,

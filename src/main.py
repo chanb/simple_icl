@@ -83,11 +83,14 @@ def main(config_path: str, run_seed: int = None, device: str = CONST_CPU):
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--config_path", type=str, help="Training configuration", required=True
     )
-    parser.add_argument("--run_seed", type=int, default=0, help="Seed for the run", required=False)
+    parser.add_argument(
+        "--run_seed", type=int, default=0, help="Seed for the run", required=False
+    )
     parser.add_argument(
         "--device",
         type=str,

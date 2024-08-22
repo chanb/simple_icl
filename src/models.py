@@ -71,7 +71,7 @@ class SimpleICLModel(Model):
         self.alpha = nn.Dense(2)
         self.h_fn = make_h(similarity)
         self.g_fn = make_g(ground_truth_prob)
-        
+
         self.forward = jax.jit(
             self.make_forward([CONST_BATCH_STATS]), static_argnames=[CONST_EVAL]
         )

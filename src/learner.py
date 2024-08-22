@@ -106,14 +106,14 @@ class InContextLearner:
             import dill
 
             self._model_dict = dill.load(open(restore_path, "rb"))[CONST_MODEL_DICT]
-            self._optimizer= get_optimizer(
+            self._optimizer = get_optimizer(
                 self._config.optimizer_config, self._model_dict[CONST_MODEL]
             )
         else:
-            params = self._model.init(model_key, self._dataset.input_space, self._dataset.output_space)
-            self._optimizer = get_optimizer(
-                self._config.optimizer_config, params
+            params = self._model.init(
+                model_key, self._dataset.input_space, self._dataset.output_space
             )
+            self._optimizer = get_optimizer(self._config.optimizer_config, params)
             opt_state = self._optimizer.init(params)
             self._model_dict = {CONST_MODEL: params, CONST_OPT_STATE: opt_state}
 
@@ -126,16 +126,13 @@ class InContextLearner:
 
             targets = batch["target"][:, -1]
 
-            loss = jnp.mean(
-                optax.softmax_cross_entropy(logits, targets)
-            )
+            loss = jnp.mean(optax.softmax_cross_entropy(logits, targets))
 
             return loss, {
                 CONST_UPDATES: updates,
             }
-        
-        self._loss = jax.jit(cross_entropy)
 
+        self._loss = jax.jit(cross_entropy)
 
     def make_train_step(self):
         """
@@ -199,15 +196,12 @@ class InContextLearner:
             total_sample_time += timeit.default_timer() - tic
 
             self._learner_key = jrandom.fold_in(
-                self._learner_key,
-                epoch * self._num_updates_per_epoch + update_i
+                self._learner_key, epoch * self._num_updates_per_epoch + update_i
             )
             batch[CONST_RANDOM_KEY] = self._learner_key
 
             tic = timeit.default_timer()
-            self._model_dict, aux = self.train_step(
-                self._model_dict, batch
-            )
+            self._model_dict, aux = self.train_step(self._model_dict, batch)
             total_update_time += timeit.default_timer() - tic
             assert np.isfinite(aux[CONST_AGG_LOSS]), f"Loss became NaN\naux: {aux}"
 
@@ -218,9 +212,7 @@ class InContextLearner:
             f"losses/{CONST_AGG_LOSS}": auxes[CONST_AGG_LOSS].item(),
             f"time/{CONST_SAMPLE_TIME}": total_sample_time,
             f"time/{CONST_UPDATE_TIME}": total_update_time,
-            f"{CONST_GRAD_NORM}/model": auxes[CONST_GRAD_NORM][
-                CONST_MODEL
-            ].item(),
+            f"{CONST_GRAD_NORM}/model": auxes[CONST_GRAD_NORM][CONST_MODEL].item(),
         }
 
         if isinstance(self._model_dict[CONST_OPT_STATE], dict):
