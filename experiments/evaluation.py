@@ -60,7 +60,7 @@ def get_eval_datasets(
 
         # Context length evaluations
         for prob_key in ["sample_high_prob_class_only", "sample_low_prob_class_only"]:
-            for fixed_start_pos in range(context_len):
+            for fixed_start_pos in range(0, context_len, 4):
                 for flip_label in [False, True]:
                     start_pos_config_dict = copy.deepcopy(config_dict)
                     modify_seed(start_pos_config_dict)
@@ -99,10 +99,6 @@ def main(args: SimpleNamespace):
     config_dict["batch_size"] = batch_size
     config = parse_dict(config_dict)
 
-    train_data_loader, train_dataset = get_data_loader(
-        config,
-    )
-
     context_len = config.dataset_kwargs.num_examples
     fixed_length = True
 
@@ -110,6 +106,10 @@ def main(args: SimpleNamespace):
         config_dict,
         test_data_seed,
         context_len,
+    )
+
+    train_data_loader, train_dataset = get_data_loader(
+        config,
     )
     datasets["pretraining"] = (
         train_data_loader,
@@ -127,15 +127,13 @@ def main(args: SimpleNamespace):
         )
 
     try:
-        accuracies = {eval_name: [] for eval_name in datasets}
-        losses = {eval_name: [] for eval_name in datasets}
-        auxes = {eval_name: [] for eval_name in datasets}
+        stats = {eval_name: dict() for eval_name in datasets}
         checkpoint_steps = []
         for params, model, checkpoint_step in tqdm(iterate_models(learner_path)):
             checkpoint_steps.append(checkpoint_step)
             for eval_name in datasets:
                 dataset, data_loader = datasets[eval_name]
-                acc, loss, aux = evaluate(
+                aux = evaluate(
                     model=model,
                     params=params,
                     prefetched_data=prefetched_data[eval_name],
@@ -143,17 +141,13 @@ def main(args: SimpleNamespace):
                     context_len=context_len,
                     fixed_length=fixed_length,
                 )
-                accuracies[eval_name].append(acc)
-                losses[eval_name].append(loss)
-                auxes[eval_name].append(aux)
+
+                for aux_key in aux:
+                    stats[eval_name].setdefault(aux_key, [])
+                    stats[eval_name][aux_key].append(aux[aux_key])
 
         pickle.dump(
-            {
-                "checkpoint_steps": checkpoint_steps,
-                "accuracies": accuracies,
-                "losses": losses,
-                "auxes": auxes,
-            },
+            {"checkpoint_steps": checkpoint_steps, "stats": stats},
             open(
                 os.path.join(learner_path, "evaluation.pkl"),
                 "wb",

@@ -41,7 +41,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--key",
-    choices=["losses", "accuracies"],
+    choices=["losses", "accuracies", "alphas"],
     required=True,
     help="The key of the statistics to plot",
 )
@@ -117,6 +117,10 @@ map_eval_to_title = {
     "pretrain-sample_high_prob_class_only-start_pos_4-flip_label": "High Freq. Only w/ Flipped Label",
     "pretrain-sample_low_prob_class_only-start_pos_4-flip_label": "Low Freq. Only w/ Flipped Label",
 }
+
+map_key_to_stats = dict(accuracies="accuracy", losses="loss", alphas="a(x)")
+map_key_to_label = dict(accuracies="Accuracy", losses="Loss", alphas="$\\alpha(x)$")
+
 max_checkpoint_steps = 0
 max_num_evals = 0
 
@@ -140,15 +144,10 @@ for run in tqdm(os.listdir(results_dir)):
 
     exp_runs.setdefault(variant, dict())
     data = pickle.load(open(os.path.join(results_dir, run, "evaluation.pkl"), "rb"))
-    exp_runs[variant][seed] = dict(
-        checkpoint_steps=data["checkpoint_steps"],
-        accuracies=data["accuracies"],
-        losses=data["losses"],
-    )
+    exp_runs[variant][seed] = data
+
     max_checkpoint_steps = max(max_checkpoint_steps, np.max(data["checkpoint_steps"]))
-    max_num_evals = max(
-        max_num_evals, len([eval_name for eval_name in data["accuracies"]])
-    )
+    max_num_evals = max(max_num_evals, len([eval_name for eval_name in data["stats"]]))
 
 if include_evals:
     max_num_evals = len(include_evals)
@@ -158,14 +157,14 @@ def process_exp_runs(exp_runs: dict, x_range: chex.Array, key="accuracies"):
     interpolated_results = dict()
     for run_i, (run_name, exp_run) in enumerate(exp_runs.items()):
         curr_checkpoint_steps = exp_run["checkpoint_steps"]
-        curr_accuracies = exp_run[key]
+        curr_stats = exp_run["stats"]
 
-        for eval_name, accuracies in curr_accuracies.items():
+        for eval_name, stats in curr_stats.items():
             interpolated_results.setdefault(
                 eval_name, np.zeros((len(exp_runs), len(x_range)))
             )
             interpolated_results[eval_name][run_i] = np.interp(
-                x_range, curr_checkpoint_steps, accuracies
+                x_range, curr_checkpoint_steps, stats[map_key_to_stats[key]]
             )
     return interpolated_results
 
@@ -193,8 +192,10 @@ if include_evals:
         map_eval_to_ax[eval_name][0].set_title(
             map_eval_to_title.get(eval_name, eval_name)
         )
-        if key == "accuracies":
+        if key in ("accuracies"):
             map_eval_to_ax[eval_name][0].set_ylim(-1.0, 101.0)
+        if key in ("alphas"):
+            map_eval_to_ax[eval_name][0].set_ylim(-0.1, 1.1)
 
 variants = sorted(exp_runs.keys())
 print(variants)
@@ -233,6 +234,8 @@ for variant in tqdm(variants):
             ax.set_title(map_eval_to_title.get(eval_name, eval_name))
             if key == "accuracies":
                 ax.set_ylim(-1.0, 101.0)
+            if key == "alphas":
+                ax.set_ylim(-0.1, 1.1)
 
 remaining_idx = num_cols * num_rows - (max_count + 1)
 if remaining_idx > 0:
@@ -242,7 +245,8 @@ if remaining_idx > 0:
         ax.axis("off")
 
 fig.supxlabel("Number of updates")
-fig.supylabel(key)
+
+fig.supylabel(map_key_to_label[key])
 fig.suptitle(title)
 fig.legend(
     bbox_to_anchor=(0.0, 1.0, 1.0, 0.0),

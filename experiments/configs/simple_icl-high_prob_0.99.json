@@ -1,0 +1,46 @@
+{
+    "logging_config": {
+        "save_path": "./results/simple_icl_model",
+        "experiment_name": "high_prob_0.99",
+        "log_interval": 50,
+        "checkpoint_interval": 500
+    },
+    "model_config": {
+        "architecture": "SimpleICLModel",
+        "model_kwargs": {
+            "ground_truth_prob": 1.0,
+            "similarity": "gaussian"
+        }
+    },
+    "optimizer_config": {
+        "optimizer": "adam",
+        "lr": {
+            "scheduler": "linear_warmup_sqrt_decay",
+            "scheduler_kwargs": {
+                "max_lr": 0.0003,
+                "warmup_steps": 4000
+            }
+        },
+        "opt_kwargs": {},
+        "max_grad_norm": false,
+        "mask_names": []
+    },
+    "dataset_kwargs": {
+        "num_high_prob_classes": 100,
+        "num_low_prob_classes": 100,
+        "high_prob": 0.99,
+        "num_dims": 64,
+        "mode": "default",
+        "num_examples": 8,
+        "input_noise_std": 0.0,
+        "abstract_class": 1,
+        "margin": 0.5
+    },
+    "shuffle_buffer_size": 100,
+    "num_workers": -1,
+    "batch_size": 32,
+    "num_epochs": 50000,
+    "num_updates_per_epoch": 1,
+    "learner_seed": 42,
+    "data_seed": 42
+}

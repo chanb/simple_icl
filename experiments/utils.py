@@ -27,10 +27,10 @@ def get_preds_labels(model, params, prefetched_data, max_label=None):
     all_preds = []
     all_labels = []
     all_outputs = []
-    num_query_class_in_context = []
+    all_auxes = dict()
 
     for batch_i, batch in enumerate(prefetched_data["samples"]):
-        outputs, updates = model.forward(
+        outputs, model_aux = model.forward(
             params[CONST_MODEL],
             batch,
             eval=True,
@@ -41,21 +41,21 @@ def get_preds_labels(model, params, prefetched_data, max_label=None):
         else:
             preds = np.argmax(outputs[..., :max_label], axis=-1)
 
-        context_outputs = batch["target"][:, :-1]
         targets = batch["target"][:, -1]
         labels = np.argmax(targets, axis=-1)
         all_preds.append(preds)
         all_labels.append(labels)
         all_outputs.append(outputs)
-        num_query_class_in_context.append(
-            np.max(np.argmax(context_outputs, axis=-1) == labels[:, None], axis=-1)
-        )
+
+        for aux_key in model_aux:
+            all_auxes.setdefault(aux_key, [])
+            all_auxes[aux_key].append(model_aux[aux_key])
 
     all_outputs = np.concatenate(all_outputs)
     all_preds = np.concatenate(all_preds)
     all_labels = np.concatenate(all_labels)
-    num_query_class_in_context = np.concatenate(num_query_class_in_context)
-    return all_preds, all_labels, all_outputs, num_query_class_in_context
+    all_auxes = {k: np.concatenate(v) for k, v in all_auxes.items()}
+    return all_preds, all_labels, all_outputs, all_auxes
 
 
 # Check model accuracy
@@ -63,7 +63,7 @@ def print_performance_with_aux(
     all_outputs,
     all_preds,
     all_labels,
-    num_query_class_in_context,
+    all_auxes,
     output_dim,
     context_len,
     fixed_length=True,
@@ -76,11 +76,21 @@ def print_performance_with_aux(
             all_outputs, jax.nn.one_hot(all_labels, num_classes=output_dim)
         )
     )
-    auxes["all"] = {
+
+    auxes = {
         "accuracy": acc,
         "loss": loss,
-        "query_class_in_context_ratio": np.mean(num_query_class_in_context),
     }
+
+    for aux_key in all_auxes:
+        if aux_key == "alpha":
+            continue
+        elif aux_key == "h":
+            auxes["h(x, x')"] = np.mean(all_auxes[aux_key][..., 0], axis=0)
+        elif aux_key == "p_iwl":
+            auxes["a(x)"] = np.mean(all_auxes[aux_key][..., 1])
+        elif aux_key == "g":
+            auxes["Pr(g(x) = 1)"] = np.mean(all_auxes[aux_key][..., 0])
 
     return auxes
 
@@ -94,16 +104,16 @@ def evaluate(
     context_len,
     fixed_length=True,
 ):
-    preds, labels, outputs, num_query_class_in_context = get_preds_labels(
+    preds, labels, outputs, model_auxes = get_preds_labels(
         model, params, prefetched_data, max_label
     )
     auxes = print_performance_with_aux(
         outputs,
         preds,
         labels,
-        num_query_class_in_context,
+        model_auxes,
         prefetched_data["dataset_output_dim"],
         context_len,
         fixed_length,
     )
-    return auxes["all"]["accuracy"], auxes["all"]["loss"], auxes
+    return auxes

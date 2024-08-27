@@ -101,6 +101,11 @@ class SimpleICLModel(Model):
             targets = flip_labels * (1 - targets) + (1 - flip_labels) * targets
             context_inputs = batch["example"][:, :-1]
             context_targets = batch["target"][:, :-1]
+            flip_labels = flip_labels[:, None]
+            context_targets = (
+                flip_labels * (1 - context_targets)
+                + (1 - flip_labels) * context_targets
+            )
 
             alphas = self.alpha.apply(params["alpha"], queries)
             p_iwl = jax.nn.softmax(alphas, axis=1)

@@ -285,7 +285,7 @@ class StreamBlockBiUniform:
             yield {
                 "example": inputs,
                 "label": labels,
-                "flip_label": flip_label,
+                "flip_label": int(flip_label),
             }
 
 
@@ -363,7 +363,7 @@ def get_dataset(
             "label": tf.TensorSpec(
                 shape=(num_examples + 1, num_classes), dtype=tf.dtypes.int32
             ),
-            "flip_label": tf.TensorSpec(shape=[], dtype=tf.dtypes.int32),
+            "flip_label": tf.TensorSpec(shape=[], dtype=tf.dtypes.int8),
         },
     )
     return TFDataset(
@@ -383,7 +383,7 @@ def prepare_seqs_for_icl(ds, num_classes: int):
         # Cast the labels into the correct tf datatype.
         targets = tf.cast(example["label"], tf.int32)  # (B,SS)
 
-        flip_labels = tf.cast(example["flip_label"], tf.int32)
+        flip_labels = tf.cast(example["flip_label"], tf.int8)
 
         # Just use the original sequence of labels, e.g. [label, label, ...]
         is_one_hot = targets.shape[-1] == num_classes
