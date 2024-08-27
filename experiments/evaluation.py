@@ -60,7 +60,7 @@ def get_eval_datasets(
 
         # Context length evaluations
         for prob_key in ["sample_high_prob_class_only", "sample_low_prob_class_only"]:
-            for fixed_start_pos in range(0, context_len, 4):
+            for fixed_start_pos in range(0, context_len, 1):
                 for flip_label in [False, True]:
                     start_pos_config_dict = copy.deepcopy(config_dict)
                     modify_seed(start_pos_config_dict)

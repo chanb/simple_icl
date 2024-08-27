@@ -26,13 +26,13 @@
         "mask_names": []
     },
     "dataset_kwargs": {
-        "num_high_prob_classes": 100,
-        "num_low_prob_classes": 100,
+        "num_high_prob_classes": 1,
+        "num_low_prob_classes": 1,
         "high_prob": 0.99,
         "num_dims": 64,
         "mode": "default",
         "num_examples": 8,
-        "input_noise_std": 0.0,
+        "input_noise_std": 0.01,
         "abstract_class": 1,
         "margin": 0.5
     },
