@@ -26,15 +26,16 @@
         "mask_names": []
     },
     "dataset_kwargs": {
-        "num_high_prob_classes": 1,
-        "num_low_prob_classes": 1,
+        "num_high_prob_classes": 1000,
+        "num_low_prob_classes": 1000,
         "high_prob": 0.5,
         "num_dims": 64,
         "mode": "default",
         "num_examples": 8,
-        "input_noise_std": 0.01,
+        "input_noise_std": 0.0,
         "abstract_class": 1,
-        "margin": 0.5
+        "margin": 0.4,
+        "linearly_separable": 1
     },
     "shuffle_buffer_size": 100,
     "num_workers": -1,

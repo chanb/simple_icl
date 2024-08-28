@@ -54,9 +54,9 @@ class StreamBlockBiUniform:
             boundary = self.rng.uniform(
                 low=-1.0,
                 high=1.0,
-                size=(self.num_dims + 1, 1),
+                size=(self.num_dims, 1),
             )
-            boundary[0] = 0.0  # Pass through origin
+            boundary /= np.linalg.norm(boundary)
 
             done_generation = False
             high_prob_centers = np.zeros((self.num_high_prob_classes, self.num_dims))
@@ -71,9 +71,7 @@ class StreamBlockBiUniform:
                 high_prob_centers = (
                     high_prob_centers * (1 - replace_mask) + new_samples * replace_mask
                 )
-                dists = (high_prob_centers @ boundary[1:] + boundary[:1]) / np.sqrt(
-                    np.sum(boundary[1:] ** 2)
-                )
+                dists = high_prob_centers @ boundary
                 replace_mask = dists > -margin
                 done_generation = np.sum(replace_mask) == 0
             print("Generated high prob centers")
@@ -90,9 +88,7 @@ class StreamBlockBiUniform:
                 low_prob_centers = (
                     low_prob_centers * (1 - replace_mask) + new_samples * replace_mask
                 )
-                dists = (low_prob_centers @ boundary[1:] + boundary[:1]) / np.sqrt(
-                    np.sum(boundary[1:] ** 2)
-                )
+                dists = low_prob_centers @ boundary
                 replace_mask = dists < margin
                 done_generation = np.sum(replace_mask) == 0
             print("Generated low prob centers")
@@ -238,7 +234,7 @@ class StreamBlockBiUniform:
             if fixed_start_pos == -1:
                 start_pos = self.rng.choice(num_examples)
 
-            block_labels = self.rng.choice(
+            block_freq = self.rng.choice(
                 self.num_classes,
                 size=(2,),
                 p=weights,
@@ -246,7 +242,7 @@ class StreamBlockBiUniform:
 
             if sample_low_prob_class_only:
                 # Sample low prob. class as query only
-                block_labels[-1] = (
+                block_freq[-1] = (
                     self.rng.choice(
                         self.num_low_prob_classes,
                         size=(1,),
@@ -255,21 +251,37 @@ class StreamBlockBiUniform:
                 )
             elif sample_high_prob_class_only:
                 # Sample low prob. class as query only
-                block_labels[-1] = self.rng.choice(
+                block_freq[-1] = self.rng.choice(
                     self.num_high_prob_classes,
                     size=(1,),
                 )
 
-            labels = [block_labels[0]] * (num_examples - start_pos) + [
-                block_labels[1]
-            ] * (start_pos + 1)
-
-            inputs = self.centers[labels]
-            inputs += input_noise_std * self.rng.randn(*inputs.shape)
-
             if abstract_class:
                 # Class 0 if high-prob clusters, class 1 otherwise
-                # TODO: Maybe there can be an ablation on varying number of classes?
+                block_labels = [
+                    self.rng.choice(
+                        self.num_high_prob_classes,
+                        size=(num_examples + 1,),
+                    ),
+                    self.rng.choice(
+                        self.num_low_prob_classes,
+                        size=(num_examples + 1,),
+                    )
+                    + self.num_high_prob_classes,
+                ]
+
+                labels = np.concatenate(
+                    (
+                        block_labels[int(block_freq[0] >= self.num_high_prob_classes)][
+                            : num_examples - start_pos
+                        ],
+                        block_labels[int(block_freq[1] >= self.num_high_prob_classes)][
+                            num_examples - start_pos :
+                        ],
+                    )
+                )
+                inputs = self.centers[labels]
+                inputs += input_noise_std * self.rng.randn(*inputs.shape)
                 if flip_label:
                     labels = [
                         1 - int(label < self.num_high_prob_classes) for label in labels
@@ -280,6 +292,11 @@ class StreamBlockBiUniform:
                     ]
                 labels = np.eye(2)[labels]
             else:
+                labels = [block_freq[0]] * (num_examples - start_pos) + [
+                    block_freq[1]
+                ] * (start_pos + 1)
+                inputs = self.centers[labels]
+                inputs += input_noise_std * self.rng.randn(*inputs.shape)
                 labels = np.eye(self.num_classes)[labels]
 
             yield {
