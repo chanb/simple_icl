@@ -13,6 +13,7 @@ import dill
 import json
 import numpy as np
 import random
+import tensorflow as tf
 
 from src.constants import *
 
@@ -40,6 +41,8 @@ def set_seed(seed: int = 0):
     """
     random.seed(seed)
     np.random.seed(seed)
+    tf.random.set_seed(seed)
+
 
 
 def parse_dict(d: Dict) -> SimpleNamespace:
