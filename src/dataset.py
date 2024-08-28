@@ -51,12 +51,11 @@ class StreamBlockBiUniform:
         self.rng = np.random.RandomState(seed)
 
         if linearly_separable:
-            boundary = self.rng.uniform(
-                low=-1.0,
-                high=1.0,
+            pos = self.rng.standard_normal(
                 size=(self.num_dims, 1),
             )
-            boundary /= np.linalg.norm(boundary)
+            pos /= np.linalg.norm(pos)
+            neg = -pos
 
             done_generation = False
             high_prob_centers = np.zeros((self.num_high_prob_classes, self.num_dims))
@@ -65,14 +64,14 @@ class StreamBlockBiUniform:
             while not done_generation:
                 new_samples = self.rng.standard_normal(
                     size=(self.num_high_prob_classes, self.num_dims)
-                )
+                ) * (1 - margin ** 2) + pos.T
                 new_samples /= np.linalg.norm(new_samples, axis=-1, keepdims=True)
 
                 high_prob_centers = (
                     high_prob_centers * (1 - replace_mask) + new_samples * replace_mask
                 )
-                dists = high_prob_centers @ boundary
-                replace_mask = dists > -margin
+                dists = high_prob_centers @ pos
+                replace_mask = dists < margin
                 done_generation = np.sum(replace_mask) == 0
             print("Generated high prob centers")
 
@@ -82,13 +81,13 @@ class StreamBlockBiUniform:
             while not done_generation:
                 new_samples = self.rng.standard_normal(
                     size=(self.num_low_prob_classes, self.num_dims)
-                )
+                ) * (1 - margin ** 2) + neg.T
                 new_samples /= np.linalg.norm(new_samples, axis=-1, keepdims=True)
 
                 low_prob_centers = (
                     low_prob_centers * (1 - replace_mask) + new_samples * replace_mask
                 )
-                dists = low_prob_centers @ boundary
+                dists = low_prob_centers @ neg
                 replace_mask = dists < margin
                 done_generation = np.sum(replace_mask) == 0
             print("Generated low prob centers")
