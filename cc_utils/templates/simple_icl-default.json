@@ -39,7 +39,7 @@
     "shuffle_buffer_size": 100,
     "num_workers": -1,
     "batch_size": 32,
-    "num_epochs": 50000,
+    "num_epochs": 100000,
     "num_updates_per_epoch": 1,
     "seeds": {
         "learner_seed": "<TO_FILL>",
