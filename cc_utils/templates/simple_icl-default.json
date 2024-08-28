@@ -33,7 +33,7 @@
         "num_examples": 8,
         "input_noise_std": 0.0,
         "abstract_class": 1,
-        "margin": 0.3,
+        "margin": 0.99,
         "linearly_separable": 1
     },
     "shuffle_buffer_size": 100,
