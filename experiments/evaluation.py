@@ -25,7 +25,7 @@ from experiments.utils import *
 
 from src.constants import *
 from src.dataset import get_data_loader
-from src.utils import parse_dict, load_config, iterate_models
+from src.utils import parse_dict, load_config, iterate_models, set_seed
 
 
 def get_eval_datasets(
@@ -94,6 +94,8 @@ def main(args: SimpleNamespace):
     batch_size = args.batch_size
     num_eval_samples = args.num_eval_samples
     test_data_seed = args.test_data_seed
+
+    set_seed(0)
 
     config_dict, config = load_config(learner_path)
     config_dict["batch_size"] = batch_size
