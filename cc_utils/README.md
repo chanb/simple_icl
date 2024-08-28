@@ -10,7 +10,7 @@ source ~/simple_icl/bin/activate
 
 pip install jax --no-index
 pip install optax flax --no-index
-pip install chex dill matplotlib tensorboard --no-index
+pip install chex dill matplotlib tensorboard seaborn --no-index
 pip install gymnasium --no-index
 pip install torch torchvision --no-index
 pip install tensorflow --no-index

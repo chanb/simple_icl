@@ -49,6 +49,14 @@ for runs_dir in os.listdir(LOG_DIR):
     num_runs += 1
 
     dat_content += (
+        "export results_dir={} save_path={} key=accuracies context=half \n".format(
+            result_path,
+            save_path,
+        )
+    )
+    num_runs += 1
+
+    dat_content += (
         "export results_dir={} save_path={} key=losses context=none \n".format(
             result_path,
             save_path,
