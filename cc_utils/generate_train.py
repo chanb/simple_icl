@@ -40,7 +40,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     )
 
     template_path = os.path.join(
-        REPO_PATH, "experiments/cc_utils/templates/{}.json".format(exp_name)
+        REPO_PATH, "cc_utils/templates/{}.json".format(exp_name)
     )
 
     num_runs = 0
@@ -57,8 +57,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
             config_dict["logging_config"]["save_path"] = os.path.join(LOG_DIR, exp_name)
             config_dict["logging_config"]["experiment_name"] = variant_name
 
-            for seed_key in config_dict["learner_config"]["seeds"]:
-                config_dict["learner_config"]["seeds"][seed_key] = seed
+            for seed_key in config_dict["seeds"]:
+                config_dict["seeds"][seed_key] = seed
 
             set_dict_value(config_dict, exp_config["variant"], value)
 

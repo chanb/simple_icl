@@ -29,7 +29,8 @@ For each experiment `EXP_NAME` defined in `configs.py`, `generate_train.py` will
 
 1. Kick off experiments using `sbatch_all_train.sh`:
 ```
-sbatch sbatch_all_train.sh
+chmod +x sbatch_all_train.sh
+./sbatch_all_train.sh
 ```
 
 ## Evaluating Results
