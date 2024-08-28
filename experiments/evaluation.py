@@ -42,7 +42,7 @@ def get_eval_datasets(
         if split == "test":
 
             def modify_seed(config_dict):
-                config_dict["data_seed"] = test_data_seed
+                config_dict["seeds"]["data_seed"] = test_data_seed
 
         else:
 

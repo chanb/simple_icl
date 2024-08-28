@@ -1,9 +1,9 @@
 {
     "logging_config": {
-        "save_path": "./local/results/simple_icl_model",
-        "experiment_name": "gt_prob_1.0",
+        "save_path": "<TO_FILL>",
+        "experiment_name": "<TO_FILL>",
         "log_interval": 50,
-        "checkpoint_interval": 500
+        "checkpoint_interval": 100
     },
     "model_config": {
         "architecture": "SimpleICLModel",
@@ -23,25 +23,27 @@
         },
         "opt_kwargs": {},
         "max_grad_norm": false,
-        "mask_names": [
-            "input_tokenizer"
-        ]
+        "mask_names": []
     },
     "dataset_kwargs": {
-        "num_high_prob_classes": 100,
+        "num_high_prob_classes": 1000,
         "num_low_prob_classes": 1000,
-        "high_prob": 0.99,
+        "high_prob": 0.5,
         "num_dims": 64,
         "mode": "default",
         "num_examples": 8,
-        "input_noise_std": 1.0,
-        "abstract_class": 1
+        "input_noise_std": 0.0,
+        "abstract_class": 1,
+        "margin": 0.3,
+        "linearly_separable": 1
     },
     "shuffle_buffer_size": 100,
     "num_workers": -1,
     "batch_size": 32,
     "num_epochs": 50000,
     "num_updates_per_epoch": 1,
-    "learner_seed": 42,
-    "data_seed": 42
+    "seeds": {
+        "learner_seed": "<TO_FILL>",
+        "data_seed": "<TO_FILL>"
+    }
 }

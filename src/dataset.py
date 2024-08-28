@@ -428,7 +428,7 @@ def get_data_loader(config: SimpleNamespace) -> Any:
         high_prob=dataset_kwargs.high_prob,
         num_dims=dataset_kwargs.num_dims,
         mode=dataset_kwargs.mode,
-        seed=config.data_seed,
+        seed=config.seeds.data_seed,
         linearly_separable=getattr(dataset_kwargs, "linearly_separable", False),
         margin=getattr(dataset_kwargs, "margin", 0.2),
         fixed_start_pos=getattr(dataset_kwargs, "fixed_start_pos", -1),

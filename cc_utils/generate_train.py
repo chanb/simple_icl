@@ -20,6 +20,14 @@ from cc_utils.constants import (
 sbatch_dir = "./sbatch_scripts"
 os.makedirs(sbatch_dir, exist_ok=True)
 
+def set_dict_value(d, key, val):
+    if key in d:
+        d[key] = val
+
+    for k in d:
+        if isinstance(d[k], dict):
+            set_dict_value(d[k], key, val)
+
 run_all_content = "#!/bin/bash\n"
 for exp_name, exp_config in EXPERIMENTS.items():
     os.makedirs(
@@ -52,9 +60,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
             for seed_key in config_dict["learner_config"]["seeds"]:
                 config_dict["learner_config"]["seeds"][seed_key] = seed
 
-            config_dict["learner_config"]["dataset_config"]["dataset_kwargs"][
-                exp_config["variant"]
-            ] = value
+            set_dict_value(config_dict, exp_config["variant"], value)
 
             json.dump(
                 config_dict,

@@ -62,7 +62,7 @@ class InContextLearner:
     ):
         self._config = config
         self._num_updates_per_epoch = config.num_updates_per_epoch
-        self._learner_key = jrandom.PRNGKey(config.learner_seed)
+        self._learner_key = jrandom.PRNGKey(config.seeds.learner_seed)
 
         self._train_data_loader, self._dataset = get_data_loader(
             config,

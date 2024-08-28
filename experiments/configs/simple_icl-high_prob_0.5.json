@@ -34,7 +34,7 @@
         "num_examples": 8,
         "input_noise_std": 0.0,
         "abstract_class": 1,
-        "margin": 0.4,
+        "margin": 0.3,
         "linearly_separable": 1
     },
     "shuffle_buffer_size": 100,
@@ -42,6 +42,8 @@
     "batch_size": 32,
     "num_epochs": 50000,
     "num_updates_per_epoch": 1,
-    "learner_seed": 42,
-    "data_seed": 42
+    "seeds": {
+        "learner_seed": 42,
+        "data_seed": 42
+    }
 }
