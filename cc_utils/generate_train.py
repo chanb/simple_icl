@@ -86,8 +86,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
         os.path.join(RUN_REPORT_DIR, exp_name)
     )
     sbatch_content += "module load python/3.10\n"
-    sbatch_content += "module load mujoco\n"
-    sbatch_content += "source ~/icl_env/bin/activate\n"
+    sbatch_content += "module load StdEnv/2020\n"
+    sbatch_content += "source ~/simple_icl/bin/activate\n"
     sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
     sbatch_content += " < {}`\n".format(
         os.path.join(CONFIG_DIR, "{}.dat".format(exp_name))
@@ -111,7 +111,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     run_all_content += "sbatch {}\n".format(script_path)
 
 with open(
-    "./sbatch_all.sh",
+    "./sbatch_all_train.sh",
     "w+",
 ) as f:
     f.writelines(run_all_content)

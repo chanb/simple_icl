@@ -47,8 +47,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
         os.path.join(RUN_REPORT_DIR, "eval", exp_name)
     )
     sbatch_content += "module load python/3.10\n"
-    sbatch_content += "module load mujoco\n"
-    sbatch_content += "source ~/icl_env/bin/activate\n"
+    sbatch_content += "module load StdEnv/2020\n"
+    sbatch_content += "source ~/simple_icl/bin/activate\n"
     sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
     sbatch_content += " < {}`\n".format(
         os.path.join(CONFIG_DIR, "eval-{}.dat".format(exp_name))
@@ -58,7 +58,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += 'echo "Running on hostname `hostname`"\n'
     sbatch_content += "echo ${learner_path}\n"
     sbatch_content += 'echo "Starting run at: `date`"\n'
-    sbatch_content += "python3 {}/cc_utils/evaluation.py \\\n".format(REPO_PATH)
+    sbatch_content += "python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
     sbatch_content += "  --learner_path=${learner_path} \n"
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 

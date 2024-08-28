@@ -70,8 +70,8 @@ sbatch_content += "#SBATCH --output={}/%j.out\n".format(
     os.path.join(RUN_REPORT_DIR, "plot_results")
 )
 sbatch_content += "module load python/3.10\n"
-sbatch_content += "module load mujoco\n"
-sbatch_content += "source ~/icl_env/bin/activate\n"
+sbatch_content += "module load StdEnv/2020\n"
+sbatch_content += "source ~/simple_icl/bin/activate\n"
 sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
 sbatch_content += " < {}`\n".format(os.path.join(CONFIG_DIR, "plot_results.dat"))
 sbatch_content += "echo ${SLURM_ARRAY_TASK_ID}\n"
@@ -79,7 +79,7 @@ sbatch_content += 'echo "Current working directory is `pwd`"\n'
 sbatch_content += 'echo "Running on hostname `hostname`"\n'
 sbatch_content += "echo ${learner_path}\n"
 sbatch_content += 'echo "Starting run at: `date`"\n'
-sbatch_content += "python3 {}/cc_utils/plot_results.py \\\n".format(REPO_PATH)
+sbatch_content += "python3 {}/experiments/plot_results.py \\\n".format(REPO_PATH)
 sbatch_content += "  --results_dir=${results_dir} \\\n"
 sbatch_content += "  --save_path=${save_path} \\\n"
 sbatch_content += "  --key=${key} \\\n"
