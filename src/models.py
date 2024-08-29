@@ -38,12 +38,10 @@ class Model(ABC):
 
 
 def make_h(similarity: str):
-    if similarity == "gaussian":
+    if similarity == "l2":
 
         def h_fn(context_inputs, queries):
-            return jnp.exp(
-                -jnp.sum((context_inputs - queries) ** 2, axis=-1, keepdims=True)
-            )
+            return -jnp.sum((context_inputs - queries) ** 2, axis=-1, keepdims=True)
 
         return h_fn
     else:
@@ -69,10 +67,12 @@ class SimpleICLModel(Model):
         self,
         ground_truth_prob: float,
         similarity: str,
+        temperature: float = 0.1,
     ):
         self.alpha = nn.Dense(1)
         self.h_fn = make_h(similarity)
         self.g_fn = make_g(ground_truth_prob)
+        self.temperature = temperature
 
         self.forward = jax.jit(
             self.make_forward([CONST_BATCH_STATS]), static_argnames=[CONST_EVAL]
@@ -111,7 +111,7 @@ class SimpleICLModel(Model):
             p_iwl = jax.nn.sigmoid(alphas)
             similarity = self.h_fn(context_inputs, queries[:, None])
             ic_pred = jnp.sum(
-                jax.nn.softmax(similarity, axis=1) * context_targets,
+                jax.nn.softmax(similarity / self.temperature, axis=1) * context_targets,
                 axis=1,
             )
             iw_pred = self.g_fn(queries, targets)
