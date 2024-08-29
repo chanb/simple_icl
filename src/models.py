@@ -42,7 +42,7 @@ def make_h(similarity: str):
 
         def h_fn(context_inputs, queries):
             return jnp.exp(
-                -jnp.sum((context_inputs - queries) ** 2, axis=-1, keepdims=True) / 1e-5
+                -jnp.sum((context_inputs - queries) ** 2, axis=-1, keepdims=True)
             )
 
         return h_fn
