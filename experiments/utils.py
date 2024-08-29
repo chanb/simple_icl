@@ -105,6 +105,8 @@ def print_performance_with_aux(
                 jrandom.split(sample_key, num=len(all_auxes[aux_key])),
             )
             auxes[aux_key] = np.mean(preds == all_labels)
+        elif aux_key == "diff last context":
+            auxes["diff last context"] = np.mean(all_auxes["diff last context"])
 
     return auxes
 
