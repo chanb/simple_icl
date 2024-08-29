@@ -2,8 +2,8 @@
 
 ## Compute Canada Installation
 ```
-module load python/3.10
 module load StdEnv/2020
+module load python/3.10
 
 python -m venv ~/simple_icl
 source ~/simple_icl/bin/activate

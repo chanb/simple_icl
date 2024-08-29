@@ -85,8 +85,8 @@ sbatch_content += "#SBATCH --array=1-{}\n".format(num_runs)
 sbatch_content += "#SBATCH --output={}/%j.out\n".format(
     os.path.join(RUN_REPORT_DIR, "plot_results")
 )
-sbatch_content += "module load python/3.10\n"
 sbatch_content += "module load StdEnv/2020\n"
+sbatch_content += "module load python/3.10\n"
 sbatch_content += "source ~/simple_icl/bin/activate\n"
 sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
 sbatch_content += " < {}`\n".format(os.path.join(CONFIG_DIR, "plot_results.dat"))

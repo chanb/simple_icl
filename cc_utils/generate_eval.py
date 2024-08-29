@@ -46,8 +46,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += "#SBATCH --output={}/%j.out\n".format(
         os.path.join(RUN_REPORT_DIR, "eval", exp_name)
     )
-    sbatch_content += "module load python/3.10\n"
     sbatch_content += "module load StdEnv/2020\n"
+    sbatch_content += "module load python/3.10\n"
     sbatch_content += "source ~/simple_icl/bin/activate\n"
     sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
     sbatch_content += " < {}`\n".format(
