@@ -44,7 +44,6 @@ def set_seed(seed: int = 0):
     tf.random.set_seed(seed)
 
 
-
 def parse_dict(d: Dict) -> SimpleNamespace:
     """
     Parse dictionary into a namespace.

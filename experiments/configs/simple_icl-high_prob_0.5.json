@@ -1,9 +1,9 @@
 {
     "logging_config": {
         "save_path": "./results/simple_icl_model",
-        "experiment_name": "high_prob_0.5",
+        "experiment_name": "seed_46-high_prob_0.5",
         "log_interval": 50,
-        "checkpoint_interval": 500
+        "checkpoint_interval": 100
     },
     "model_config": {
         "architecture": "SimpleICLModel",
@@ -42,7 +42,7 @@
     "num_epochs": 50000,
     "num_updates_per_epoch": 1,
     "seeds": {
-        "learner_seed": 42,
-        "data_seed": 42
+        "learner_seed": 46,
+        "data_seed": 46
     }
 }

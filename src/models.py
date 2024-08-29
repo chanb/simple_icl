@@ -42,7 +42,7 @@ def make_h(similarity: str):
 
         def h_fn(context_inputs, queries):
             return jnp.exp(
-                -jnp.sum((context_inputs - queries) ** 2, axis=-1, keepdims=True)
+                -jnp.sum((context_inputs - queries) ** 2, axis=-1, keepdims=True) / 1e-5
             )
 
         return h_fn
@@ -70,7 +70,7 @@ class SimpleICLModel(Model):
         ground_truth_prob: float,
         similarity: str,
     ):
-        self.alpha = nn.Dense(2)
+        self.alpha = nn.Dense(1)
         self.h_fn = make_h(similarity)
         self.g_fn = make_g(ground_truth_prob)
 
@@ -108,19 +108,20 @@ class SimpleICLModel(Model):
             )
 
             alphas = self.alpha.apply(params["alpha"], queries)
-            p_iwl = jax.nn.softmax(alphas, axis=1)
+            p_iwl = jax.nn.sigmoid(alphas)
             similarity = self.h_fn(context_inputs, queries[:, None])
-            icl_pred = jnp.sum(
+            ic_pred = jnp.sum(
                 jax.nn.softmax(similarity, axis=1) * context_targets,
                 axis=1,
             )
-            iwl_pred = self.g_fn(queries, targets)
+            iw_pred = self.g_fn(queries, targets)
 
-            return (1 - p_iwl) * icl_pred + p_iwl * iwl_pred, {
+            return (1 - p_iwl) * ic_pred + p_iwl * iw_pred, {
                 "alpha": alphas,
                 "p_iwl": p_iwl,
                 "h": similarity,
-                "g": iwl_pred,
+                "iw_pred": iw_pred,
+                "ic_pred": ic_pred,
             }
 
         return forward

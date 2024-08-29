@@ -62,9 +62,13 @@ class StreamBlockBiUniform:
             replace_mask = high_prob_centers == 0
 
             while not done_generation:
-                new_samples = self.rng.standard_normal(
-                    size=(self.num_high_prob_classes, self.num_dims)
-                ) * (1 - margin ** 2) + pos.T
+                new_samples = (
+                    self.rng.standard_normal(
+                        size=(self.num_high_prob_classes, self.num_dims)
+                    )
+                    * (1 - margin**2)
+                    + pos.T
+                )
                 new_samples /= np.linalg.norm(new_samples, axis=-1, keepdims=True)
 
                 high_prob_centers = (
@@ -73,15 +77,18 @@ class StreamBlockBiUniform:
                 dists = high_prob_centers @ pos
                 replace_mask = dists < margin
                 done_generation = np.sum(replace_mask) == 0
-            print("Generated high prob centers")
 
             done_generation = False
             low_prob_centers = np.zeros((self.num_low_prob_classes, self.num_dims))
             replace_mask = low_prob_centers == 0
             while not done_generation:
-                new_samples = self.rng.standard_normal(
-                    size=(self.num_low_prob_classes, self.num_dims)
-                ) * (1 - margin ** 2) + neg.T
+                new_samples = (
+                    self.rng.standard_normal(
+                        size=(self.num_low_prob_classes, self.num_dims)
+                    )
+                    * (1 - margin**2)
+                    + neg.T
+                )
                 new_samples /= np.linalg.norm(new_samples, axis=-1, keepdims=True)
 
                 low_prob_centers = (
@@ -90,7 +97,6 @@ class StreamBlockBiUniform:
                 dists = low_prob_centers @ neg
                 replace_mask = dists < margin
                 done_generation = np.sum(replace_mask) == 0
-            print("Generated low prob centers")
 
             self.centers = np.concatenate((high_prob_centers, low_prob_centers), axis=0)
         else:
@@ -283,11 +289,11 @@ class StreamBlockBiUniform:
                 inputs += input_noise_std * self.rng.randn(*inputs.shape)
                 if flip_label:
                     labels = [
-                        1 - int(label < self.num_high_prob_classes) for label in labels
+                        1 - int(label >= self.num_high_prob_classes) for label in labels
                     ]
                 else:
                     labels = [
-                        int(label < self.num_high_prob_classes) for label in labels
+                        int(label >= self.num_high_prob_classes) for label in labels
                     ]
                 labels = np.eye(2)[labels]
             else:

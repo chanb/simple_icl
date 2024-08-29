@@ -118,6 +118,7 @@ def main(args: SimpleNamespace):
         train_dataset,
     )
     dataset_configs["pretraining"] = config.dataset_kwargs
+    sample_key = jrandom.PRNGKey(config_dict["seeds"]["learner_seed"])
 
     prefetched_data = {}
     for eval_name in tqdm(datasets, postfix="Prefetching data"):
@@ -133,16 +134,17 @@ def main(args: SimpleNamespace):
         checkpoint_steps = []
         for params, model, checkpoint_step in tqdm(iterate_models(learner_path)):
             checkpoint_steps.append(checkpoint_step)
-            for eval_name in datasets:
-                dataset, data_loader = datasets[eval_name]
+            sample_key = jrandom.fold_in(sample_key, checkpoint_step)
+            for eval_name in prefetched_data:
                 aux = evaluate(
                     model=model,
                     params=params,
                     prefetched_data=prefetched_data[eval_name],
                     max_label=None,
-                    context_len=context_len,
+                    sample_key=sample_key,
                     fixed_length=fixed_length,
                 )
+                sample_key = jrandom.split(sample_key)[0]
 
                 for aux_key in aux:
                     stats[eval_name].setdefault(aux_key, [])

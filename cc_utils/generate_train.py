@@ -20,6 +20,7 @@ from cc_utils.constants import (
 sbatch_dir = "./sbatch_scripts"
 os.makedirs(sbatch_dir, exist_ok=True)
 
+
 def set_dict_value(d, key, val):
     if key in d:
         d[key] = val
@@ -27,6 +28,7 @@ def set_dict_value(d, key, val):
     for k in d:
         if isinstance(d[k], dict):
             set_dict_value(d[k], key, val)
+
 
 run_all_content = "#!/bin/bash\n"
 for exp_name, exp_config in EXPERIMENTS.items():

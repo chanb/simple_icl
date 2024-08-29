@@ -118,7 +118,7 @@ map_eval_to_title = {
     "pretrain-sample_low_prob_class_only-start_pos_4-flip_label": "Low Freq. Only w/ Flipped Label",
 }
 
-map_key_to_stats = dict(accuracies="accuracy", losses="loss", alphas="a(x)")
+map_key_to_stats = dict(accuracies="accuracy", losses="loss", alphas="p_iwl")
 map_key_to_label = dict(accuracies="Accuracy", losses="Loss", alphas="$\\alpha(x)$")
 
 max_checkpoint_steps = 0
@@ -163,9 +163,13 @@ def process_exp_runs(exp_runs: dict, x_range: chex.Array, key="accuracies"):
             interpolated_results.setdefault(
                 eval_name, np.zeros((len(exp_runs), len(x_range)))
             )
-            interpolated_results[eval_name][run_i] = np.interp(
-                x_range, curr_checkpoint_steps, stats[map_key_to_stats[key]]
-            )
+
+            if len(x_range) - 1 != len(curr_checkpoint_steps):
+                interpolated_results[eval_name][run_i] = np.interp(
+                    x_range, curr_checkpoint_steps, stats[map_key_to_stats[key]]
+                )
+            else:
+                interpolated_results[eval_name][run_i] = stats[map_key_to_stats[key]]
     return interpolated_results
 
 

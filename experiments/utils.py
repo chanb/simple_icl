@@ -13,6 +13,7 @@ import src.models as models
 from src.constants import *
 
 import jax
+import jax.random as jrandom
 import matplotlib.pyplot as plt
 import numpy as np
 import optax
@@ -42,6 +43,7 @@ def get_preds_labels(model, params, prefetched_data, max_label=None):
             preds = np.argmax(outputs[..., :max_label], axis=-1)
 
         targets = batch["target"][:, -1]
+        last_context = np.argmax(batch["target"][:, -2], axis=-1)
         labels = np.argmax(targets, axis=-1)
         all_preds.append(preds)
         all_labels.append(labels)
@@ -50,6 +52,9 @@ def get_preds_labels(model, params, prefetched_data, max_label=None):
         for aux_key in model_aux:
             all_auxes.setdefault(aux_key, [])
             all_auxes[aux_key].append(model_aux[aux_key])
+
+        all_auxes.setdefault("diff last context", [])
+        all_auxes["diff last context"].append(last_context == labels)
 
     all_outputs = np.concatenate(all_outputs)
     all_preds = np.concatenate(all_preds)
@@ -65,7 +70,7 @@ def print_performance_with_aux(
     all_labels,
     all_auxes,
     output_dim,
-    context_len,
+    sample_key,
     fixed_length=True,
 ):
     conf_mat = confusion_matrix(all_labels, all_preds, labels=np.arange(output_dim))
@@ -86,11 +91,20 @@ def print_performance_with_aux(
         if aux_key == "alpha":
             continue
         elif aux_key == "h":
-            auxes["h(x, x')"] = np.mean(all_auxes[aux_key][..., 0], axis=0)
+            auxes["similarity"] = np.mean(all_auxes[aux_key][..., 0], axis=0)
         elif aux_key == "p_iwl":
-            auxes["a(x)"] = np.mean(all_auxes[aux_key][..., 1])
-        elif aux_key == "g":
-            auxes["Pr(g(x) = 1)"] = np.mean(all_auxes[aux_key][..., 0])
+            auxes["p_iwl"] = np.mean(all_auxes[aux_key] >= 0.5)
+            auxes["p_iwl given diff last context"] = np.mean(
+                all_auxes[aux_key][np.where(all_auxes["diff last context"])[0]] >= 0.5
+            )
+        elif aux_key in ["ic_pred", "iw_pred"]:
+            preds = jax.vmap(
+                lambda probs, key: jrandom.choice(key, output_dim, p=probs)
+            )(
+                all_auxes[aux_key],
+                jrandom.split(sample_key, num=len(all_auxes[aux_key])),
+            )
+            auxes[aux_key] = np.mean(preds == all_labels)
 
     return auxes
 
@@ -101,7 +115,7 @@ def evaluate(
     params,
     prefetched_data,
     max_label,
-    context_len,
+    sample_key,
     fixed_length=True,
 ):
     preds, labels, outputs, model_auxes = get_preds_labels(
@@ -113,7 +127,7 @@ def evaluate(
         labels,
         model_auxes,
         prefetched_data["dataset_output_dim"],
-        context_len,
+        sample_key,
         fixed_length,
     )
     return auxes
