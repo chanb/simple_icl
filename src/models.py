@@ -36,7 +36,12 @@ class Model(ABC):
     ) -> Dict[str, Any]:
         return params
 
+"""
+TODO:
+- Similarity looks at true matching token
+- Learnable g(x)
 
+"""
 def make_h(similarity: str):
     if similarity == "l2":
 
@@ -110,6 +115,69 @@ class SimpleICLModel(Model):
                 axis=1,
             )
             iw_pred = self.g_fn(queries, targets, flip_labels)
+
+            return (1 - p_iwl) * ic_pred + p_iwl * iw_pred, {
+                "alpha": alphas,
+                "p_iwl": p_iwl,
+                "h": similarity,
+                "iw_pred": iw_pred,
+                "ic_pred": ic_pred,
+            }
+
+        return forward
+
+
+class SimpleICLModelLearnedIWPredictor(Model):
+    def __init__(
+        self,
+        similarity: str,
+        temperature: float = 0.1,
+    ):
+        self.alpha = nn.Dense(1)
+        self.h_fn = make_h(similarity)
+        self.g_fn = nn.Dense(2)
+        self.temperature = temperature
+
+        self.forward = jax.jit(
+            self.make_forward([CONST_BATCH_STATS]), static_argnames=[CONST_EVAL]
+        )
+        self.intermediates = jax.jit(
+            self.make_forward([CONST_INTERMEDIATES], True), static_argnames=[CONST_EVAL]
+        )
+
+    def init(self, model_key, input_space, output_space):
+        alpha_key, g_key = jrandom.split(model_key)
+        sample = input_space.sample()
+        return {
+            "alpha": self.alpha.init(alpha_key, sample),
+            "g": self.g_fn.init(g_key, sample)
+        }
+
+    def make_forward(
+        self,
+        mutable,
+        capture_intermediates=False,
+    ):
+        def forward(
+            params,
+            batch,
+            eval=False,
+            **kwargs,
+        ):
+            queries = batch["example"][:, -1]
+            targets = batch["target"][:, -1]
+            flip_labels = batch["flip_label"][:, None]
+            context_inputs = batch["example"][:, :-1]
+            context_targets = batch["target"][:, :-1]
+
+            alphas = self.alpha.apply(params["alpha"], queries)
+            p_iwl = jax.nn.sigmoid(alphas)
+            similarity = self.h_fn(context_inputs, queries[:, None])
+            ic_pred = jnp.sum(
+                jax.nn.softmax(similarity / self.temperature, axis=1) * context_targets,
+                axis=1,
+            )
+            iw_pred = jax.nn.softmax(self.g_fn.apply(params["g"], queries) / self.temperature, axis=1)
 
             return (1 - p_iwl) * ic_pred + p_iwl * iw_pred, {
                 "alpha": alphas,
