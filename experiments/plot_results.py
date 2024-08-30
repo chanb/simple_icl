@@ -170,6 +170,10 @@ def process_exp_runs(exp_runs: dict, x_range: chex.Array, key="accuracies"):
                 )
             else:
                 interpolated_results[eval_name][run_i] = stats[map_key_to_stats[key]]
+            # interpolated_results.setdefault(
+            #     eval_name, np.zeros((len(exp_runs), len(curr_checkpoint_steps)))
+            # )
+            # interpolated_results[eval_name][run_i] = stats[map_key_to_stats[key]]
     return interpolated_results
 
 

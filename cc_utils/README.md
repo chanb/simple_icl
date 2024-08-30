@@ -18,6 +18,9 @@ pip install tensorflow_datasets --no-index
 pip install scikit-learn --no-index
 ```
 
+## Setup JupyterHub
+See [here](https://docs.alliancecan.ca/wiki/Advanced_Jupyter_configuration#Python_kernel)
+
 ## Running Experiments
 **Important:** Modify `constants.py` to setup the correct credentials and paths.
 

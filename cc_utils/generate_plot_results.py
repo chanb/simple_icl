@@ -78,7 +78,7 @@ with open(os.path.join(CONFIG_DIR, "plot_results.dat"), "w+") as f:
 sbatch_content = ""
 sbatch_content += "#!/bin/bash\n"
 sbatch_content += "#SBATCH --account={}\n".format(CC_ACCOUNT)
-sbatch_content += "#SBATCH --time=00:10:00\n"
+sbatch_content += "#SBATCH --time=00:30:00\n"
 sbatch_content += "#SBATCH --cpus-per-task=1\n"
 sbatch_content += "#SBATCH --mem=12G\n"
 sbatch_content += "#SBATCH --array=1-{}\n".format(num_runs)
