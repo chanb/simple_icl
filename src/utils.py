@@ -17,6 +17,8 @@ import tensorflow as tf
 
 from src.constants import *
 
+import src.models as models
+
 
 def get_device(device: str):
     (device_name, *device_ids) = device.split(":")
@@ -112,7 +114,14 @@ def iterate_models(
     :rtype: Iterable
     """
 
-    model = dill.load(open(os.path.join(learner_path, "architecture.dill"), "rb"))
+    # model = dill.load(open(os.path.join(learner_path, "architecture.dill"), "rb"))
+    config_path = os.path.join(learner_path, "config.json")
+    with open(config_path, "r") as f:
+        config_dict = json.load(f)
+        config = parse_dict(config_dict)
+    model = getattr(models, config.model_config.architecture)(
+            **vars(config.model_config.model_kwargs)
+        )
 
     all_steps = sorted(os.listdir(os.path.join(learner_path, "models")))
     for step in all_steps:

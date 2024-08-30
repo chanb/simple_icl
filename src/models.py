@@ -49,7 +49,8 @@ def make_h(similarity: str):
 
 
 def make_g(ground_truth_prob: float):
-    def g_fn(queries, outputs):
+    def g_fn(queries, outputs, flip_labels):
+        outputs = flip_labels * (1 - outputs) + (1 - flip_labels) * outputs
         return jnp.clip(
             jnp.full_like(
                 outputs, fill_value=((1 - ground_truth_prob) / (outputs.shape[-1] - 1))
@@ -98,14 +99,8 @@ class SimpleICLModel(Model):
             queries = batch["example"][:, -1]
             targets = batch["target"][:, -1]
             flip_labels = batch["flip_label"][:, None]
-            targets = flip_labels * (1 - targets) + (1 - flip_labels) * targets
             context_inputs = batch["example"][:, :-1]
             context_targets = batch["target"][:, :-1]
-            flip_labels = flip_labels[:, None]
-            context_targets = (
-                flip_labels * (1 - context_targets)
-                + (1 - flip_labels) * context_targets
-            )
 
             alphas = self.alpha.apply(params["alpha"], queries)
             p_iwl = jax.nn.sigmoid(alphas)
@@ -114,7 +109,7 @@ class SimpleICLModel(Model):
                 jax.nn.softmax(similarity / self.temperature, axis=1) * context_targets,
                 axis=1,
             )
-            iw_pred = self.g_fn(queries, targets)
+            iw_pred = self.g_fn(queries, targets, flip_labels)
 
             return (1 - p_iwl) * ic_pred + p_iwl * iw_pred, {
                 "alpha": alphas,
