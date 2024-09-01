@@ -3,8 +3,10 @@ EXPERIMENTS = {
         "run_time": "00:45:00",
         "num_seeds": 10,
         "variants": [
-            "key": "high_prob",
-            "values": [0.5, 0.67, 0.75, 0.8, 0.9, 0.99]
+            {
+                "key": "high_prob",
+                "values": [0.5, 0.67, 0.75, 0.8, 0.9, 0.99]
+            }
         ]
     },
     "simple_icl-fixed_g": {

@@ -8,6 +8,8 @@ sys.path.insert(0, parentdir)
 
 import json
 
+from itertools import product
+
 from cc_utils.configs import EXPERIMENTS
 from cc_utils.constants import (
     CONFIG_DIR,
@@ -47,9 +49,19 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
     num_runs = 0
     dat_content = ""
+
+    variant_keys = []
+    variant_values = []
+    for variant in exp_config["variants"]:
+        variant_keys.append(variant["key"])
+        variant_values.append(variant["values"])
+
     for seed in range(exp_config["num_seeds"]):
-        for variant_i, value in enumerate(exp_config["values"]):
-            variant_name = "{}_{}-seed_{}".format(exp_config["variant"], value, seed)
+        for variant_config in product(*variant_values):
+            variant_name = "-".join([
+                "{}_{}".format(variant_key, variant_value) for variant_key, variant_value in zip(variant_keys, variant_config)
+            ] + ["seed_{}".format(seed)])
+
             curr_config_path = os.path.join(
                 CONFIG_DIR, exp_name, "{}.json".format(variant_name)
             )
@@ -62,7 +74,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
             for seed_key in config_dict["seeds"]:
                 config_dict["seeds"][seed_key] = seed
 
-            set_dict_value(config_dict, exp_config["variant"], value)
+            for variant_key, variant_value in zip(variant_keys, variant_config):
+                set_dict_value(config_dict, variant_key, variant_value)
 
             json.dump(
                 config_dict,
