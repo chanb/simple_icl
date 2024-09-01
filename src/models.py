@@ -40,6 +40,8 @@ class Model(ABC):
 TODO:
 - Similarity looks at true matching token
 - Learnable g(x)
+- Should a(x) also consider the contexts?
+- plot with x-axis being p(g(x) = c)
 
 """
 def make_h(similarity: str):

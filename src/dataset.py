@@ -224,6 +224,7 @@ class StreamBlockBiUniform:
         sample_low_prob_class_only: int = 0,
         sample_high_prob_class_only: int = 0,
         flip_label: int = 0,
+        scramble_context: int = 0,
     ):
         assert sample_low_prob_class_only + sample_high_prob_class_only <= 1
 
@@ -304,6 +305,11 @@ class StreamBlockBiUniform:
                 inputs += input_noise_std * self.rng.randn(*inputs.shape)
                 labels = np.eye(self.num_classes)[labels]
 
+            if scramble_context:
+                inds = self.rng.permutation(num_examples)
+                inputs[:-1] = inputs[:-1][inds]
+                labels[:-1] = labels[:-1][inds]
+
             yield {
                 "example": inputs,
                 "label": labels,
@@ -321,6 +327,7 @@ def get_dataset(
     sample_high_prob_class_only: int = 0,
     stratified: int = 0,
     flip_label: int = 0,
+    scramble_context: int = 0,
     # For constructor
     num_high_prob_classes: int = 16,
     num_low_prob_classes: int = 256,
@@ -371,6 +378,7 @@ def get_dataset(
             sample_low_prob_class_only,
             sample_high_prob_class_only,
             flip_label,
+            scramble_context,
         )
     else:
         raise NotImplementedError
@@ -445,7 +453,8 @@ def get_data_loader(config: SimpleNamespace) -> Any:
             dataset_kwargs, "sample_high_prob_class_only", 0
         ),
         stratified=getattr(dataset_kwargs, "stratified", 0),
-        flip_label=getattr(dataset_kwargs, "flip_label", False),
+        flip_label=getattr(dataset_kwargs, "flip_label", 0),
+        scramble_context=getattr(dataset_kwargs, "scramble_context", 0),
     )
     ds_seqs = dataset.dataset
 
