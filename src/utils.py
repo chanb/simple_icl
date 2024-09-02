@@ -120,8 +120,8 @@ def iterate_models(
         config_dict = json.load(f)
         config = parse_dict(config_dict)
     model = getattr(models, config.model_config.architecture)(
-            **vars(config.model_config.model_kwargs)
-        )
+        **vars(config.model_config.model_kwargs)
+    )
 
     all_steps = sorted(os.listdir(os.path.join(learner_path, "models")))
     for step in all_steps:

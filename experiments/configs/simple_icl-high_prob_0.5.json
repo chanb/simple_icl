@@ -1,7 +1,7 @@
 {
     "logging_config": {
-        "save_path": "./results/simple_icl_model",
-        "experiment_name": "seed_46-high_prob_0.5",
+        "save_path": "./results/test",
+        "experiment_name": "test",
         "log_interval": 50,
         "checkpoint_interval": 100
     },
@@ -9,7 +9,8 @@
         "architecture": "SimpleICLModel",
         "model_kwargs": {
             "ground_truth_prob": 1.0,
-            "similarity": "l2"
+            "similarity": "l2",
+            "alpha_num_examples": 8
         }
     },
     "optimizer_config": {
