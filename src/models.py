@@ -53,7 +53,9 @@ def make_g(ground_truth_prob: float):
         outputs = flip_labels * (1 - outputs) + (1 - flip_labels) * outputs
         return jnp.clip(
             jnp.abs(jnp.full_like(
-                outputs, fill_value=((max(ground_truth_prob, 1 - ground_truth_prob)) / (outputs.shape[-1] - 1))
+                outputs,
+                fill_value=(max(ground_truth_prob, 1 - ground_truth_prob)) / (outputs.shape[-1] - 1),
+                dtype=jnp.float32,
             ) - outputs),
             a_min=0.0,
             a_max=1.0,
