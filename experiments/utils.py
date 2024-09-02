@@ -95,7 +95,8 @@ def print_performance_with_aux(
         elif aux_key == "h":
             auxes["similarity"] = np.mean(all_auxes[aux_key][..., 0], axis=0)
         elif aux_key == "p_iwl":
-            auxes["p_iwl"] = np.mean(all_auxes[aux_key] >= 0.5)
+            auxes["p_iwl"] = np.mean(all_auxes[aux_key])
+            auxes["num p_iwl >= 0.5"] = np.mean(all_auxes[aux_key] >= 0.5)
             auxes["p_iwl given context contains query class"] = np.mean(
                 all_auxes[aux_key][np.where(all_auxes["context contains query class"])[0]] >= 0.5
             )
