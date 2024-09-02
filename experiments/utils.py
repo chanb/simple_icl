@@ -96,8 +96,8 @@ def print_performance_with_aux(
             auxes["similarity"] = np.mean(all_auxes[aux_key][..., 0], axis=0)
         elif aux_key == "p_iwl":
             auxes["p_iwl"] = np.mean(all_auxes[aux_key] >= 0.5)
-            auxes["p_iwl given diff last context"] = np.mean(
-                all_auxes[aux_key][np.where(all_auxes["diff last context"])[0]] >= 0.5
+            auxes["p_iwl given context contains query class"] = np.mean(
+                all_auxes[aux_key][np.where(all_auxes["context contains query class"])[0]] >= 0.5
             )
         elif aux_key in ["ic_pred", "iw_pred"]:
             preds = jax.vmap(
@@ -107,8 +107,8 @@ def print_performance_with_aux(
                 jrandom.split(sample_key, num=len(all_auxes[aux_key])),
             )
             auxes[aux_key] = np.mean(preds == all_labels)
-        elif aux_key == "diff last context":
-            auxes["diff last context"] = np.mean(all_auxes["diff last context"])
+        elif aux_key == "context contains query class":
+            auxes["context contains query class"] = np.mean(all_auxes["context contains query class"])
 
     return auxes
 
