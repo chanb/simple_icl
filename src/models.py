@@ -269,6 +269,43 @@ class InContextSupervisedTransformer(Model):
         self.tokenize = jax.jit(self.make_tokenize())
         self.get_latent = jax.jit(self.make_get_latent())
         self.forward = jax.jit(self.make_forward(query_pred_only))
+        self.get_attention = jax.jit(
+            self.make_get_attention(), static_argnames=[CONST_EVAL]
+        )
+
+    def make_get_attention(self):
+
+        def get_latent(
+            params: Union[optax.Params, Dict[str, Any]],
+            batch: Any,
+            eval: bool = False,
+            **kwargs,
+        ) -> Tuple[chex.Array, chex.Array, Any]:
+            """
+            Get latent call of the GPT.
+
+            :param params: the model parameters
+            :param batch: the batch
+            :type params: Union[optax.Params, Dict[str, Any]]
+            :type batch: Any
+            :return: the output and a pass-through carry
+            :rtype: Tuple[chex.Array, chex.Array, Any]
+
+            """
+            stacked_inputs, token_updates = self.tokenize(
+                params, batch, eval, **kwargs
+            )
+            (repr, gpt_updates) = self.gpt.apply(
+                params[CONST_GPT],
+                stacked_inputs,
+                eval,
+                mutable=["intermediates"],
+                capture_intermediates=True,
+            )
+
+            return repr, {**token_updates, CONST_GPT: gpt_updates}
+
+        return get_latent
 
     def _make_get_positional_encoding(
         self, input_output_same_encoding: bool

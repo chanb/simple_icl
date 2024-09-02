@@ -61,7 +61,10 @@ def get_preds_labels(model, params, prefetched_data, max_label=None):
     all_outputs = np.concatenate(all_outputs)
     all_preds = np.concatenate(all_preds)
     all_labels = np.concatenate(all_labels)
-    all_auxes = {k: np.concatenate(v) for k, v in all_auxes.items()}
+    try:
+        all_auxes = {k: np.concatenate(v) for k, v in all_auxes.items()}
+    except:
+        all_auxes = {}
     return all_preds, all_labels, all_outputs, all_auxes
 
 
