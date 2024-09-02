@@ -6,8 +6,9 @@
         "checkpoint_interval": 100
     },
     "model_config": {
-        "architecture": "SimpleICLModelLearnedIWPredictor",
+        "architecture": "SimpleICLModel",
         "model_kwargs": {
+            "ground_truth_prob": 1.0,
             "similarity": "l2"
         }
     },
