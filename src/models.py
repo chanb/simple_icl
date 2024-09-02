@@ -37,16 +37,6 @@ class Model(ABC):
         return params
 
 
-"""
-TODO:
-- Similarity looks at true matching token
-- Learnable g(x)
-- Should a(x) also consider the contexts?
-- plot with x-axis being p(g(x) = c)
-
-"""
-
-
 def make_h(similarity: str):
     if similarity == "l2":
 
@@ -369,7 +359,12 @@ class InContextSupervisedTransformer(Model):
         dummy_repr = np.zeros((1, 1, self.embed_dim))
         return {
             CONST_INPUT_TOKENIZER: (
-                jnp.eye(self.embed_dim)
+                {
+                    "params": {
+                        "kernel": jnp.eye(self.embed_dim),
+                        "bias": jnp.zeros(self.embed_dim),
+                    }
+                }
                 if self.freeze_input_tokenizer
                 else self.input_tokenizer.init(input_key, input_space.sample()[None])
             ),
@@ -414,15 +409,12 @@ class InContextSupervisedTransformer(Model):
             input_embedding, input_updates = self.input_tokenizer.apply(
                 params[CONST_INPUT_TOKENIZER],
                 batch["example"],
-                None,
-                eval,
                 mutable=[CONST_BATCH_STATS],
             )
 
             context_output_embedding, output_updates = self.output_tokenizer.apply(
                 params[CONST_OUTPUT_TOKENIZER],
                 batch["target"][:, :-1],
-                eval,
                 mutable=[CONST_BATCH_STATS],
             )
 
@@ -436,7 +428,6 @@ class InContextSupervisedTransformer(Model):
 
             return (
                 stacked_inputs,
-                None,
                 {
                     CONST_INPUT_TOKENIZER: input_updates,
                     CONST_OUTPUT_TOKENIZER: output_updates,
@@ -472,7 +463,7 @@ class InContextSupervisedTransformer(Model):
             :rtype: Tuple[chex.Array, chex.Array, Any]
 
             """
-            stacked_inputs, _, token_updates = self.tokenize(
+            stacked_inputs, token_updates = self.tokenize(
                 params, batch, eval, **kwargs
             )
             (repr, gpt_updates) = self.gpt.apply(
@@ -483,7 +474,7 @@ class InContextSupervisedTransformer(Model):
                 **kwargs,
             )
 
-            return repr, None, {**token_updates, CONST_GPT: gpt_updates}
+            return repr, {**token_updates, CONST_GPT: gpt_updates}
 
         return get_latent
 
@@ -524,13 +515,13 @@ class InContextSupervisedTransformer(Model):
             :rtype: Tuple[chex.Array, chex.Array, Any]
 
             """
-            repr, carry, latent_updates = self.get_latent(params, batch, eval, **kwargs)
+            repr, latent_updates = self.get_latent(params, batch, eval, **kwargs)
             outputs = self.predictor.apply(
                 params[CONST_PREDICTOR],
                 repr,
             )
 
-            return process_prediction(outputs), carry, latent_updates
+            return process_prediction(outputs), latent_updates
 
         return forward
 
