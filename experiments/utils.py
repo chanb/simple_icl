@@ -43,7 +43,7 @@ def get_preds_labels(model, params, prefetched_data, max_label=None):
             preds = np.argmax(outputs[..., :max_label], axis=-1)
 
         targets = batch["target"][:, -1]
-        last_context = np.argmax(batch["target"][:, -2], axis=-1)
+        contexts = np.argmax(batch["target"][:, :-1], axis=-1)
         labels = np.argmax(targets, axis=-1)
         all_preds.append(preds)
         all_labels.append(labels)
@@ -53,8 +53,10 @@ def get_preds_labels(model, params, prefetched_data, max_label=None):
             all_auxes.setdefault(aux_key, [])
             all_auxes[aux_key].append(model_aux[aux_key])
 
-        all_auxes.setdefault("diff last context", [])
-        all_auxes["diff last context"].append(last_context == labels)
+        all_auxes.setdefault("context contains query class", [])
+        all_auxes["context contains query class"].append(
+            np.sum(contexts == labels[:, None], axis=-1) > 0
+        )
 
     all_outputs = np.concatenate(all_outputs)
     all_preds = np.concatenate(all_preds)
