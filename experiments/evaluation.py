@@ -156,7 +156,7 @@ def main(args: SimpleNamespace):
         pickle.dump(
             {"checkpoint_steps": checkpoint_steps, "stats": stats},
             open(
-                os.path.join(save_path, "evaluation-{}.pkl".format(os.path.basename(learner_path))),
+                os.path.join(save_path, "{}.pkl".format(os.path.basename(learner_path))),
                 "wb",
             ),
         )
