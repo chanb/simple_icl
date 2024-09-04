@@ -15,7 +15,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-from omniglot import OmniglotDatasetForSampling, SeqGenerator, N_CHARACTER_CLASSES
+from src.omniglot import OmniglotDatasetForSampling, SeqGenerator, N_CHARACTER_CLASSES
 
 
 class TFDataset:

@@ -104,7 +104,13 @@ def main(args: SimpleNamespace):
     config_dict["batch_size"] = batch_size
     config = parse_dict(config_dict)
 
-    context_len = config.dataset_kwargs.num_examples
+    if hasattr(config.model_config.model_kwargs, "num_contexts"):
+        context_len = config.model_config.model_kwargs.num_contexts
+    elif hasattr(config.dataset_kwargs, "num_examples"):
+        context_len = config.dataset_kwargs.num_examples
+    else:
+        raise NotImplementedError
+
     fixed_length = True
 
     datasets, dataset_configs = get_eval_datasets(
