@@ -103,10 +103,12 @@ for exp_name, exp_config in EXPERIMENTS.items():
     else:
         sbatch_content += "#SBATCH --cpus-per-task=1\n"
         sbatch_content += "#SBATCH --mem=3G\n"
+
     sbatch_content += "#SBATCH --array=1-{}\n".format(num_runs)
     sbatch_content += "#SBATCH --output={}/%j.out\n".format(
         os.path.join(RUN_REPORT_DIR, exp_name)
     )
+
     if exp_name.startswith("omniglot"):
         sbatch_content += "module load StdEnv/2023\n"
         sbatch_content += "module load python/3.10\n"
@@ -116,6 +118,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
         sbatch_content += "module load StdEnv/2020\n"
         sbatch_content += "module load python/3.10\n"
         sbatch_content += "source ~/simple_icl/bin/activate\n"
+
     sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
     sbatch_content += " < {}`\n".format(
         os.path.join(CONFIG_DIR, "{}.dat".format(exp_name))
@@ -125,11 +128,13 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += 'echo "Running on hostname `hostname`"\n'
     sbatch_content += "echo ${config_path}\n"
     sbatch_content += 'echo "Starting run at: `date`"\n'
+
     if exp_name.startswith("omniglot"):
         sbatch_content += 'mkdir $SLURM_TMPDIR/tensorflow_datasets\n'
         sbatch_content += 'tar xf {} -C $SLURM_TMPDIR/tensorflow_datasets\n'.format(
             os.path.join(HOME_DIR, "tensorflow_datasets")
         )
+
     sbatch_content += "python3 {}/src/main.py \\\n".format(REPO_PATH)
     sbatch_content += "  --config_path=${config_path} \n"
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
