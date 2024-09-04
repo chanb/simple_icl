@@ -47,7 +47,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--context",
-    choices=["none", "last", "half"],
+    choices=["none", "last", "half", "all"],
     required=True,
     help="The number of context from query class",
 )
@@ -72,6 +72,8 @@ elif context == "half":
     title = "Half Contexts from Query Class"
 elif context == "none":
     title = "No Context from Query Class"
+elif context == "all":
+    title = "All"
 
 if title == "Last Context from Query Class":
     eval_type = "icl"
@@ -101,6 +103,7 @@ elif title == "Half Contexts from Query Class":
         "pretrain-sample_low_prob_class_only-start_pos_4-flip_label",
     ]
 else:
+    eval_type = "all"
     include_evals = None
 
 map_eval_to_title = {
