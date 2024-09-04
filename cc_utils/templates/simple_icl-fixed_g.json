@@ -25,6 +25,7 @@
         "max_grad_norm": false,
         "mask_names": []
     },
+    "dataset_name": "streamblock",
     "dataset_kwargs": {
         "num_high_prob_classes": 1000,
         "num_low_prob_classes": 1000,

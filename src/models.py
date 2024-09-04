@@ -19,7 +19,7 @@ import numpy as np
 import optax
 
 from src.constants import *
-from src.modules import GPTModule, PositionalEncoding
+from src.modules import GPTModule, PositionalEncoding, ResNetV1Module
 
 
 class Model(ABC):
@@ -238,6 +238,7 @@ class InContextSupervisedTransformer(Model):
         num_heads: int,
         embed_dim: int,
         widening_factor: int,
+        input_tokenizer: str = "dense",
         query_pred_only: bool = False,
         input_output_same_encoding: bool = True,
         freeze_input_tokenizer: bool = True,
@@ -249,7 +250,19 @@ class InContextSupervisedTransformer(Model):
             embed_dim=embed_dim,
             widening_factor=widening_factor,
         )
-        self.input_tokenizer = nn.Dense(embed_dim)
+        if input_tokenizer == "dense":
+            self.input_tokenizer = nn.Dense(embed_dim)
+        elif input_tokenizer == "resnet":
+            self.input_tokenizer = ResNetV1Module(
+                blocks_per_group=[2, 2, 2, 2],
+                features=[12, 32, 32, embed_dim],
+                stride=[1, 2, 2, 2],
+                use_projection=[True, True, True, True,],
+                use_bottleneck=True,
+                use_batch_norm=False,
+            )
+        else:
+            raise NotImplementedError
         self.output_tokenizer = nn.Dense(embed_dim)
         self.predictor = nn.Dense(int(np.product(output_dim)))
         self.num_tokens = num_contexts * 2 + 1
@@ -402,7 +415,7 @@ class InContextSupervisedTransformer(Model):
                     }
                 }
                 if self.freeze_input_tokenizer
-                else self.input_tokenizer.init(input_key, input_space.sample()[None])
+                else self.input_tokenizer.init(input_key, input_space.sample()[None], eval=True)
             ),
             CONST_OUTPUT_TOKENIZER: self.output_tokenizer.init(
                 output_key, np.zeros(output_space.n)[None]
@@ -445,6 +458,7 @@ class InContextSupervisedTransformer(Model):
             input_embedding, input_updates = self.input_tokenizer.apply(
                 params[CONST_INPUT_TOKENIZER],
                 batch["example"],
+                eval=eval,
                 mutable=[CONST_BATCH_STATS],
             )
 

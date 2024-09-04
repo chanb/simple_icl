@@ -112,6 +112,8 @@ def main(args: SimpleNamespace):
         test_data_seed,
         context_len,
     )
+    # datasets = dict()
+    # dataset_configs = dict()
 
     train_data_loader, train_dataset = get_data_loader(
         config,

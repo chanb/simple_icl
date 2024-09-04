@@ -1,3 +1,11 @@
+import inspect
+import os
+import sys
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+
 from gymnasium import spaces
 from types import SimpleNamespace
 from typing import Any
@@ -6,6 +14,8 @@ import chex
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
+
+from omniglot import OmniglotDatasetForSampling, SeqGenerator, N_CHARACTER_CLASSES
 
 
 class TFDataset:
@@ -317,27 +327,31 @@ class StreamBlockBiUniform:
             }
 
 
-def get_dataset(
-    # For get_sequences
-    num_examples: int,
-    input_noise_std: float,
-    fixed_start_pos: int = -1,
-    abstract_class: int = 0,
-    sample_low_prob_class_only: int = 0,
-    sample_high_prob_class_only: int = 0,
-    stratified: int = 0,
-    flip_label: int = 0,
-    scramble_context: int = 0,
-    # For constructor
-    num_high_prob_classes: int = 16,
-    num_low_prob_classes: int = 256,
-    high_prob: float = 0.8,
-    num_dims: int = 64,
-    mode: str = "default",
-    seed: int = 42,
-    linearly_separable: bool = False,
-    margin: float = 0.2,
+def get_streamblock_seq_generator(
+    dataset_kwargs: SimpleNamespace,
+    seed: int,
 ):
+    num_examples = dataset_kwargs.num_examples
+    input_noise_std = dataset_kwargs.input_noise_std
+    num_high_prob_classes = dataset_kwargs.num_high_prob_classes
+    num_low_prob_classes = dataset_kwargs.num_low_prob_classes
+    high_prob = dataset_kwargs.high_prob
+    num_dims = dataset_kwargs.num_dims
+    mode = dataset_kwargs.mode
+    linearly_separable = getattr(dataset_kwargs, "linearly_separable", False)
+    margin = getattr(dataset_kwargs, "margin", 0.2)
+    fixed_start_pos = getattr(dataset_kwargs, "fixed_start_pos", -1)
+    abstract_class = getattr(dataset_kwargs, "abstract_class", 0)
+    sample_low_prob_class_only = getattr(
+        dataset_kwargs, "sample_low_prob_class_only", 0
+    )
+    sample_high_prob_class_only = getattr(
+        dataset_kwargs, "sample_high_prob_class_only", 0
+    )
+    stratified = getattr(dataset_kwargs, "stratified", 0)
+    flip_label = getattr(dataset_kwargs, "flip_label", 0)
+    scramble_context = getattr(dataset_kwargs, "scramble_context", 0)
+
     if abstract_class:
         num_classes = 2
     else:
@@ -403,6 +417,91 @@ def get_dataset(
     )
 
 
+def get_omniglot_seq_generator(
+    dataset_kwargs: SimpleNamespace,
+    seed: int,
+):
+    task_name = dataset_kwargs.task_name
+    task_config = dataset_kwargs.task_config
+
+    data_generator_factory = SeqGenerator(
+        OmniglotDatasetForSampling(
+            omniglot_split="all",
+            exemplars=task_config.exemplars,
+            augment_images=False,
+        ),
+        n_rare_classes=1603,  # 1623 - 20
+        n_common_classes=10,
+        n_holdout_classes=10,
+        zipf_exponent=0.0,
+        use_zipf_for_common_rare=False,
+        noise_scale=task_config.noise_scale,
+        preserve_ordering_every_n=None,
+        random_seed=seed,
+    )
+
+    if task_name == "bursty":
+        seq_generator = data_generator_factory.get_bursty_seq
+
+        seq_config = (
+            dataset_kwargs.sequence_length,
+            dataset_kwargs.bursty_shots,
+            dataset_kwargs.ways,
+            dataset_kwargs.p_bursty,
+            0.0,
+            1.0,
+            "zipfian",
+            "ordered",
+            "ordered",
+            False,
+            False,
+        )
+    elif task_name == "fewshot_holdout":
+        seq_generator = data_generator_factory.get_fewshot_seq
+        seq_config = (
+            "holdout",
+            dataset_kwargs.fs_shots,
+            dataset_kwargs.ways,
+            "unfixed",
+            False,
+            False,
+        )
+    elif task_name == "no_support":
+        seq_generator = data_generator_factory.get_no_support_seq
+        all_unique = False
+        seq_config = (
+            "zipfian",
+            dataset_kwargs.sequence_length,
+            all_unique,
+            "ordered",
+            False,
+        )
+    else:
+        raise NotImplementedError
+
+    example_shape = (dataset_kwargs.sequence_length, 105, 105, 1)
+    example_dtype = tf.dtypes.float32
+
+    dataset = tf.data.Dataset.from_generator(
+        seq_generator,
+        args=seq_config,
+        output_signature={
+            "example": tf.TensorSpec(shape=example_shape, dtype=example_dtype),
+            "label": tf.TensorSpec(
+                shape=(dataset_kwargs.sequence_length,), dtype=tf.dtypes.int32
+            ),
+            "is_rare": tf.TensorSpec(
+                shape=(dataset_kwargs.sequence_length,), dtype=tf.dtypes.int32
+            ),
+        },
+    )
+    return TFDataset(
+        dataset,
+        spaces.Box(low=0, high=255, shape=(105, 105, 1), dtype=int),
+        spaces.Discrete(N_CHARACTER_CLASSES),
+    )
+
+
 def prepare_seqs_for_icl(ds, num_classes: int):
     """Convert example and label sequences for use by the transformer."""
 
@@ -413,8 +512,6 @@ def prepare_seqs_for_icl(ds, num_classes: int):
         # Cast the labels into the correct tf datatype.
         targets = tf.cast(example["label"], tf.int32)  # (B,SS)
 
-        flip_labels = tf.cast(example["flip_label"], tf.int8)
-
         # Just use the original sequence of labels, e.g. [label, label, ...]
         is_one_hot = targets.shape[-1] == num_classes
         if not is_one_hot:
@@ -424,38 +521,26 @@ def prepare_seqs_for_icl(ds, num_classes: int):
         ret_dict = {
             "example": examples,
             "target": targets,
-            "flip_label": flip_labels,
         }
+
+        if "flip_label" in example:
+            flip_labels = tf.cast(example["flip_label"], tf.int8)
+            ret_dict["flip_label"] = flip_labels
         return tf.data.Dataset.from_tensors(ret_dict)
 
     return ds.flat_map(_convert_dict)
 
 
 def get_data_loader(config: SimpleNamespace) -> Any:
+    dataset_name = config.dataset_name
     dataset_kwargs = config.dataset_kwargs
-    dataset = get_dataset(
-        num_examples=dataset_kwargs.num_examples,
-        input_noise_std=dataset_kwargs.input_noise_std,
-        num_high_prob_classes=dataset_kwargs.num_high_prob_classes,
-        num_low_prob_classes=dataset_kwargs.num_low_prob_classes,
-        high_prob=dataset_kwargs.high_prob,
-        num_dims=dataset_kwargs.num_dims,
-        mode=dataset_kwargs.mode,
-        seed=config.seeds.data_seed,
-        linearly_separable=getattr(dataset_kwargs, "linearly_separable", False),
-        margin=getattr(dataset_kwargs, "margin", 0.2),
-        fixed_start_pos=getattr(dataset_kwargs, "fixed_start_pos", -1),
-        abstract_class=getattr(dataset_kwargs, "abstract_class", 0),
-        sample_low_prob_class_only=getattr(
-            dataset_kwargs, "sample_low_prob_class_only", 0
-        ),
-        sample_high_prob_class_only=getattr(
-            dataset_kwargs, "sample_high_prob_class_only", 0
-        ),
-        stratified=getattr(dataset_kwargs, "stratified", 0),
-        flip_label=getattr(dataset_kwargs, "flip_label", 0),
-        scramble_context=getattr(dataset_kwargs, "scramble_context", 0),
-    )
+
+    if dataset_name == "streamblock":
+        seq_generator = get_streamblock_seq_generator
+    elif dataset_name == "omniglot":
+        seq_generator = get_omniglot_seq_generator
+
+    dataset = seq_generator(dataset_kwargs, config.seeds.data_seed)
     ds_seqs = dataset.dataset
 
     shuffle_buffer_size = config.shuffle_buffer_size

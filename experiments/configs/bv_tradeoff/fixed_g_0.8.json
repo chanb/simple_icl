@@ -1,9 +1,9 @@
 {
     "logging_config": {
         "save_path": "./results/bv_tradeoff",
-        "experiment_name": "fixed_g_0.9",
+        "experiment_name": "fixed_g_0.8",
         "log_interval": 50,
-        "checkpoint_interval": 100
+        "checkpoint_interval": 500
     },
     "model_config": {
         "architecture": "SimpleICLModel",
@@ -17,13 +17,14 @@
         "lr": {
             "scheduler": "constant_schedule",
             "scheduler_kwargs": {
-                "value": 3e-4
+                "value": 1e-3
             }
         },
         "opt_kwargs": {},
         "max_grad_norm": false,
         "mask_names": []
     },
+    "dataset_name": "streamblock",
     "dataset_kwargs": {
         "num_high_prob_classes": 1000,
         "num_low_prob_classes": 1000,
@@ -39,7 +40,7 @@
     "shuffle_buffer_size": 100,
     "num_workers": -1,
     "batch_size": 32,
-    "num_epochs": 10000,
+    "num_epochs": 50000,
     "num_updates_per_epoch": 1,
     "seeds": {
         "learner_seed": 46,
