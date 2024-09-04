@@ -60,7 +60,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += "echo ${learner_path}\n"
     sbatch_content += 'echo "Starting run at: `date`"\n'
     sbatch_content += "python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
-    sbatch_content += "  --learner_path=${learner_path} \n"
+    sbatch_content += "  --learner_path=${learner_path} \\\n"
     sbatch_content += "  --save_path={} \n".format(os.path.join(EVAL_DIR, exp_name))
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 
