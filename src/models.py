@@ -131,7 +131,7 @@ class SimpleICLModel(Model):
             )
             iw_pred = self.g_fn(queries, targets, flip_labels)
 
-            return (1 - p_iwl) * ic_pred + p_iwl * iw_pred, {
+            return jnp.log((1 - p_iwl) * ic_pred + p_iwl * iw_pred), {
                 "alpha": alphas,
                 "p_iwl": p_iwl,
                 "h": similarity,
@@ -216,7 +216,7 @@ class SimpleICLModelLearnedIWPredictor(Model):
                 self.g_fn.apply(params["g"], queries) / self.temperature, axis=1
             )
 
-            return (1 - p_iwl) * ic_pred + p_iwl * iw_pred, {
+            return jnp.log((1 - p_iwl) * ic_pred + p_iwl * iw_pred), {
                 "alpha": alphas,
                 "p_iwl": p_iwl,
                 "h": similarity,

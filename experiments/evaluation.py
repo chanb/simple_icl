@@ -138,6 +138,8 @@ def main(args: SimpleNamespace):
 
     config_dict, config = load_config(learner_path)
     config_dict["batch_size"] = batch_size
+    if "dataset_name" not in config_dict:
+        config_dict["dataset_name"] = "streamblock"
     config = parse_dict(config_dict)
 
     if hasattr(config.model_config.model_kwargs, "num_contexts"):
