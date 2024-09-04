@@ -130,8 +130,10 @@ class SimpleICLModel(Model):
                 axis=1,
             )
             iw_pred = self.g_fn(queries, targets, flip_labels)
+            probs = jnp.clip((1 - p_iwl) * ic_pred + p_iwl * iw_pred, min=1e-8)
+            log_probs = jnp.log(probs)
 
-            return jnp.log((1 - p_iwl) * ic_pred + p_iwl * iw_pred), {
+            return log_probs, {
                 "alpha": alphas,
                 "p_iwl": p_iwl,
                 "h": similarity,
@@ -215,8 +217,10 @@ class SimpleICLModelLearnedIWPredictor(Model):
             iw_pred = jax.nn.softmax(
                 self.g_fn.apply(params["g"], queries) / self.temperature, axis=1
             )
+            probs = jnp.clip((1 - p_iwl) * ic_pred + p_iwl * iw_pred, min=1e-8)
+            log_probs = jnp.log(probs)
 
-            return jnp.log((1 - p_iwl) * ic_pred + p_iwl * iw_pred), {
+            return log_probs, {
                 "alpha": alphas,
                 "p_iwl": p_iwl,
                 "h": similarity,
