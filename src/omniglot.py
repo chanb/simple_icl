@@ -19,6 +19,7 @@ import logging
 import random
 
 import numpy as np
+import os
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -79,8 +80,15 @@ class OmniglotDatasetForSampling:
             return data
 
         else:
+            data_dir = None
+            if "SLURM_TMPDIR" in os.environ:
+                data_dir = os.path.join(os.environ(data_dir), "tensorflow_datasets")
             ds = tfds.load(
-                "omniglot", split=split, as_supervised=True, shuffle_files=False
+                "omniglot",
+                split=split,
+                as_supervised=True,
+                shuffle_files=False,
+                data_dir=data_dir,
             )
             data = {}
 
