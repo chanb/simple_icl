@@ -9,6 +9,7 @@ sys.path.insert(0, parentdir)
 from cc_utils.configs import EXPERIMENTS
 from cc_utils.constants import (
     CONFIG_DIR,
+    EVAL_DIR,
     LOG_DIR,
     RUN_REPORT_DIR,
     REPO_PATH,
@@ -60,6 +61,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += 'echo "Starting run at: `date`"\n'
     sbatch_content += "python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
     sbatch_content += "  --learner_path=${learner_path} \n"
+    sbatch_content += "  --save_path={} \n".format(os.path.join(EVAL_DIR, exp_name))
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 
     script_path = os.path.join(sbatch_dir, f"run_all-eval-{exp_name}.sh")

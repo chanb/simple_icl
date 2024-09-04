@@ -1,5 +1,6 @@
 HOME_DIR = "/home/chanb"
 CONFIG_DIR = f"{HOME_DIR}/scratch/simple_icl/configs"
+EVAL_DIR = f"{HOME_DIR}/scratch/simple_icl/evaluation_results"
 LOG_DIR = f"{HOME_DIR}/scratch/simple_icl/results"
 PLOT_DIR = f"{HOME_DIR}/scratch/simple_icl/plots"
 RUN_REPORT_DIR = f"{HOME_DIR}/scratch/simple_icl/run_reports"

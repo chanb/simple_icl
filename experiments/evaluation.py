@@ -91,11 +91,14 @@ def get_eval_datasets(
 
 def main(args: SimpleNamespace):
     learner_path = args.learner_path
+    save_path = args.save_path
     batch_size = args.batch_size
     num_eval_samples = args.num_eval_samples
     test_data_seed = args.test_data_seed
 
     set_seed(0)
+
+    os.makedirs(save_path, exist_ok=True)
 
     config_dict, config = load_config(learner_path)
     config_dict["batch_size"] = batch_size
@@ -153,7 +156,7 @@ def main(args: SimpleNamespace):
         pickle.dump(
             {"checkpoint_steps": checkpoint_steps, "stats": stats},
             open(
-                os.path.join(learner_path, "evaluation.pkl"),
+                os.path.join(save_path, "evaluation-{}.pkl".format(os.path.basename(learner_path))),
                 "wb",
             ),
         )
@@ -171,6 +174,12 @@ if __name__ == "__main__":
         type=str,
         required=True,
         help="The experiment run to load from",
+    )
+    parser.add_argument(
+        "--save_path",
+        type=str,
+        required=True,
+        help="The directory to save to",
     )
     parser.add_argument(
         "--num_eval_samples",

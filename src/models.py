@@ -51,15 +51,12 @@ def make_h(similarity: str):
 def make_g(ground_truth_prob: float):
     def g_fn(queries, outputs, flip_labels):
         outputs = flip_labels * (1 - outputs) + (1 - flip_labels) * outputs
-        return jnp.clip(
-            jnp.abs(jnp.full_like(
-                outputs,
-                fill_value=(max(ground_truth_prob, 1 - ground_truth_prob)) / (outputs.shape[-1] - 1),
-                dtype=jnp.float32,
-            ) - outputs),
-            a_min=0.0,
-            a_max=1.0,
-        )
+        dists = jnp.eye(outputs.shape[-1])
+        one_mask = (dists == 1).astype(float)
+        zero_mask = (dists == 0).astype(float)
+        dists = one_mask * ground_truth_prob + zero_mask * (1 - ground_truth_prob) / (outputs.shape[-1] - 1)
+
+        return dists[jnp.argmax(outputs, axis=-1)]
 
     return g_fn
 
