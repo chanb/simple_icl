@@ -8,7 +8,8 @@
     "model_config": {
         "architecture": "SimpleICLModelLearnedIWPredictor",
         "model_kwargs": {
-            "similarity": "l2"
+            "similarity": "l2",
+            "alpha_num_examples": 8
         }
     },
     "optimizer_config": {

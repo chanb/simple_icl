@@ -9,8 +9,7 @@
         "architecture": "SimpleICLModel",
         "model_kwargs": {
             "ground_truth_prob": 1.0,
-            "similarity": "l2",
-            "alpha_num_examples": 8
+            "similarity": "l2"
         }
     },
     "optimizer_config": {
