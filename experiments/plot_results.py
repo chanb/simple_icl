@@ -143,7 +143,7 @@ for run in tqdm(os.listdir(results_dir)):
         continue
 
     exp_runs.setdefault(variant, dict())
-    data = pickle.load(open(os.path.join(results_dir, run, "evaluation.pkl"), "rb"))
+    data = pickle.load(open(os.path.join(results_dir, run), "rb"))
     exp_runs[variant][seed] = data
 
     max_checkpoint_steps = max(max_checkpoint_steps, np.max(data["checkpoint_steps"]))
