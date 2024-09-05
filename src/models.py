@@ -19,7 +19,7 @@ import numpy as np
 import optax
 
 from src.constants import *
-from src.modules import GPTModule, PositionalEncoding, ResNetV1Module
+from src.modules import GPTModule, PositionalEncoding, ResNetV1Module, MLPModule
 
 
 class Model(ABC):
@@ -231,6 +231,10 @@ class SimpleICLModelLearnedIWPredictor(Model):
         return forward
 
 
+def identity(x):
+    return x
+
+
 class InContextSupervisedTransformer(Model):
     """A GPT for in-context learning."""
 
@@ -242,7 +246,7 @@ class InContextSupervisedTransformer(Model):
         num_heads: int,
         embed_dim: int,
         widening_factor: int,
-        input_tokenizer: str = "dense",
+        input_tokenizer: str = "mlp",
         query_pred_only: bool = False,
         input_output_same_encoding: bool = True,
         freeze_input_tokenizer: bool = True,
@@ -254,8 +258,15 @@ class InContextSupervisedTransformer(Model):
             embed_dim=embed_dim,
             widening_factor=widening_factor,
         )
-        if input_tokenizer == "dense":
-            self.input_tokenizer = nn.Dense(embed_dim)
+        if input_tokenizer == "mlp":
+            self.input_tokenizer = MLPModule(
+                layers=[embed_dim],
+                activation=identity,
+                output_activation=identity,
+                use_batch_norm=False,
+                use_bias=True,
+                flatten=False,
+            )
         elif input_tokenizer == "resnet":
             self.input_tokenizer = ResNetV1Module(
                 blocks_per_group=[2, 2, 2, 2],
@@ -410,12 +421,15 @@ class InContextSupervisedTransformer(Model):
         )
         dummy_token = np.zeros((1, 1, self.embed_dim))
         dummy_repr = np.zeros((1, 1, self.embed_dim))
+
         return {
             CONST_INPUT_TOKENIZER: (
                 {
                     "params": {
-                        "kernel": jnp.eye(self.embed_dim),
-                        "bias": jnp.zeros(self.embed_dim),
+                        "Dense_0": {
+                            "kernel": jnp.eye(self.embed_dim),
+                            "bias": jnp.zeros(self.embed_dim),
+                        }
                     }
                 }
                 if self.freeze_input_tokenizer
