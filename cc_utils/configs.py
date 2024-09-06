@@ -16,6 +16,14 @@ EXPERIMENTS = {
             {
                 "key": "high_prob",
                 "values": [0.5, 0.67, 0.75, 0.8, 0.9, 0.99]
+            },
+            {
+                "key": "num_high_prob_classes",
+                "values": [100],
+            },
+            {
+                "key": "num_low_prob_classes",
+                "values": [100],
             }
         ]
     },
