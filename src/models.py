@@ -47,6 +47,7 @@ def make_h(similarity: str):
     else:
         raise NotImplementedError
 
+
 def make_g(high_freq_prob: float, low_freq_prob: float):
     dists = jnp.array(
         [
@@ -274,7 +275,12 @@ class InContextSupervisedTransformer(Model):
                 blocks_per_group=[2, 2, 2, 2],
                 features=[12, 32, 32, embed_dim],
                 stride=[1, 2, 2, 2],
-                use_projection=[True, True, True, True,],
+                use_projection=[
+                    True,
+                    True,
+                    True,
+                    True,
+                ],
                 use_bottleneck=True,
                 use_batch_norm=False,
             )
@@ -319,9 +325,7 @@ class InContextSupervisedTransformer(Model):
             :rtype: Tuple[chex.Array, chex.Array, Any]
 
             """
-            stacked_inputs, token_updates = self.tokenize(
-                params, batch, eval, **kwargs
-            )
+            stacked_inputs, token_updates = self.tokenize(params, batch, eval, **kwargs)
             (repr, gpt_updates) = self.gpt.apply(
                 params[CONST_GPT],
                 stacked_inputs,
@@ -435,7 +439,9 @@ class InContextSupervisedTransformer(Model):
                     }
                 }
                 if self.freeze_input_tokenizer
-                else self.input_tokenizer.init(input_key, input_space.sample()[None], eval=True)
+                else self.input_tokenizer.init(
+                    input_key, input_space.sample()[None], eval=True
+                )
             ),
             CONST_OUTPUT_TOKENIZER: self.output_tokenizer.init(
                 output_key, np.zeros(output_space.n)[None]
@@ -533,9 +539,7 @@ class InContextSupervisedTransformer(Model):
             :rtype: Tuple[chex.Array, chex.Array, Any]
 
             """
-            stacked_inputs, token_updates = self.tokenize(
-                params, batch, eval, **kwargs
-            )
+            stacked_inputs, token_updates = self.tokenize(params, batch, eval, **kwargs)
             (repr, gpt_updates) = self.gpt.apply(
                 params[CONST_GPT],
                 stacked_inputs,

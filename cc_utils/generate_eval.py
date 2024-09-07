@@ -42,7 +42,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += "#!/bin/bash\n"
     sbatch_content += "#SBATCH --account={}\n".format(CC_ACCOUNT)
     sbatch_content += "#SBATCH --time={}\n".format(exp_config["run_time"])
-    
+
     if exp_name.startswith("omniglot"):
         sbatch_content += "#SBATCH --cpus-per-task=4\n"
         sbatch_content += "#SBATCH --gres=gpu:1\n"
@@ -65,7 +65,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
         sbatch_content += "module load StdEnv/2020\n"
         sbatch_content += "module load python/3.10\n"
         sbatch_content += "source ~/simple_icl/bin/activate\n"
-    
+
     sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
     sbatch_content += " < {}`\n".format(
         os.path.join(CONFIG_DIR, "eval-{}.dat".format(exp_name))
@@ -77,8 +77,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += 'echo "Starting run at: `date`"\n'
 
     if exp_name.startswith("omniglot"):
-        sbatch_content += 'mkdir $SLURM_TMPDIR/tensorflow_datasets\n'
-        sbatch_content += 'tar xf {} -C $SLURM_TMPDIR/tensorflow_datasets\n'.format(
+        sbatch_content += "mkdir $SLURM_TMPDIR/tensorflow_datasets\n"
+        sbatch_content += "tar xf {} -C $SLURM_TMPDIR/tensorflow_datasets\n".format(
             os.path.join(HOME_DIR, "tensorflow_datasets")
         )
 

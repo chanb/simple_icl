@@ -42,18 +42,14 @@ EXPERIMENTS = {
         "num_seeds": 10,
         "variants": [
             {
-                "key": [
-                    "high_prob",
-                    "high_freq_prob",
-                    "low_freq_prob"
-                ],
+                "key": ["high_prob", "high_freq_prob", "low_freq_prob"],
                 "values": [
                     [0.5, 0.67, 0.75, 0.8, 0.9, 0.99],
                     [0.5, 0.67, 0.75, 0.8, 0.9, 0.99],
-                    [1 - 0.5, 1 - 0.67, 1 - 0.75, 1 - 0.8, 1 - 0.9, 1 - 0.99]
-                ]
+                    [1 - 0.5, 1 - 0.67, 1 - 0.75, 1 - 0.8, 1 - 0.9, 1 - 0.99],
+                ],
             }
-        ]
+        ],
     },
 }
 

@@ -59,9 +59,24 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
     for seed in range(exp_config["num_seeds"]):
         for variant_config in product(*variant_values):
-            variant_name = "-".join([
-                "{}_{}".format(variant_key, variant_value) for variant_key, variant_value in zip(variant_keys, variant_config)
-            ] + ["seed_{}".format(seed)])
+            variant_name = "-".join(
+                [
+                    (
+                        "{}_{}".format(variant_key, variant_value)
+                        if isinstance(variant_key, str)
+                        else "-".join(
+                            [
+                                "{}_{}".format(curr_variant_key, curr_variant_value)
+                                for curr_variant_key, curr_variant_value in zip(
+                                    variant_key, variant_value
+                                )
+                            ]
+                        )
+                    )
+                    for variant_key, variant_value in zip(variant_keys, variant_config)
+                ]
+                + ["seed_{}".format(seed)]
+            )
 
             curr_config_path = os.path.join(
                 CONFIG_DIR, exp_name, "{}.json".format(variant_name)
@@ -79,8 +94,12 @@ for exp_name, exp_config in EXPERIMENTS.items():
                 if isinstance(variant_key, str):
                     set_dict_value(config_dict, variant_key, variant_value)
                 else:
-                    for curr_variant_key, curr_variant_value in zip(variant_key, variant_value):
-                        set_dict_value(config_dict, curr_variant_key, curr_variant_value)
+                    for curr_variant_key, curr_variant_value in zip(
+                        variant_key, variant_value
+                    ):
+                        set_dict_value(
+                            config_dict, curr_variant_key, curr_variant_value
+                        )
 
             json.dump(
                 config_dict,
@@ -134,8 +153,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += 'echo "Starting run at: `date`"\n'
 
     if exp_name.startswith("omniglot"):
-        sbatch_content += 'mkdir $SLURM_TMPDIR/tensorflow_datasets\n'
-        sbatch_content += 'tar xf {} -C $SLURM_TMPDIR/tensorflow_datasets\n'.format(
+        sbatch_content += "mkdir $SLURM_TMPDIR/tensorflow_datasets\n"
+        sbatch_content += "tar xf {} -C $SLURM_TMPDIR/tensorflow_datasets\n".format(
             os.path.join(HOME_DIR, "tensorflow_datasets")
         )
 
