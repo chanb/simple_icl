@@ -8,7 +8,8 @@
     "model_config": {
         "architecture": "SimpleICLModel",
         "model_kwargs": {
-            "ground_truth_prob": 1.0,
+            "high_freq_prob": 1.0,
+            "low_freq_prob": 1.0,
             "similarity": "l2",
             "alpha_num_examples": 8
         }

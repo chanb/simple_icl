@@ -47,15 +47,16 @@ def make_h(similarity: str):
     else:
         raise NotImplementedError
 
+def make_g(high_freq_prob: float, low_freq_prob: float):
+    dists = jnp.array(
+        [
+            [high_freq_prob, 1 - high_freq_prob],
+            [1 - low_freq_prob, low_freq_prob],
+        ],
+    )
 
-def make_g(ground_truth_prob: float):
     def g_fn(queries, outputs, flip_labels):
         outputs = flip_labels * (1 - outputs) + (1 - flip_labels) * outputs
-        dists = jnp.eye(outputs.shape[-1])
-        one_mask = (dists == 1).astype(float)
-        zero_mask = (dists == 0).astype(float)
-        dists = one_mask * ground_truth_prob + zero_mask * (1 - ground_truth_prob) / (outputs.shape[-1] - 1)
-
         return dists[jnp.argmax(outputs, axis=-1)]
 
     return g_fn
@@ -64,14 +65,15 @@ def make_g(ground_truth_prob: float):
 class SimpleICLModel(Model):
     def __init__(
         self,
-        ground_truth_prob: float,
+        high_freq_prob: float,
+        low_freq_prob: float,
         similarity: str,
         temperature: float = 0.1,
         alpha_num_examples: int = 0,
     ):
         self.alpha = nn.Dense(1)
         self.h_fn = make_h(similarity)
-        self.g_fn = make_g(ground_truth_prob)
+        self.g_fn = make_g(high_freq_prob, low_freq_prob)
         self.temperature = temperature
         self.alpha_num_examples = alpha_num_examples
 

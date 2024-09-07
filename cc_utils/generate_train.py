@@ -76,7 +76,11 @@ for exp_name, exp_config in EXPERIMENTS.items():
                 config_dict["seeds"][seed_key] = seed
 
             for variant_key, variant_value in zip(variant_keys, variant_config):
-                set_dict_value(config_dict, variant_key, variant_value)
+                if isinstance(variant_key, str):
+                    set_dict_value(config_dict, variant_key, variant_value)
+                else:
+                    for curr_variant_key, curr_variant_value in zip(variant_key, variant_value):
+                        set_dict_value(config_dict, curr_variant_key, curr_variant_value)
 
             json.dump(
                 config_dict,
