@@ -35,7 +35,7 @@ EXPERIMENTS = {
     #     ]
     # },
     "simple_icl-fixed_g": {
-        "run_time": "00:45:00",
+        "run_time": "01:15:00",
         "num_seeds": 10,
         "variants": [
             {
