@@ -51,7 +51,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     num_runs = 0
     dat_content = ""
 
-    if isinstance(variant["key"], str):
+    if isinstance(exp_config["variants"][0]["key"], str):
         variant_keys = []
         variant_values = []
         for variant in exp_config["variants"]:
@@ -59,12 +59,12 @@ for exp_name, exp_config in EXPERIMENTS.items():
             variant_values.append(variant["values"])
         agg = product
     else:
-        variant_keys = variant["key"]
-        variant_values = variant["key"]
+        variant_keys = exp_config["variants"][0]["key"]
+        variant_values = exp_config["variants"][0]["values"]
         agg = zip
 
     for seed in range(exp_config["num_seeds"]):
-        for variant_config in product(*variant_values):
+        for variant_config in agg(*variant_values):
             variant_name = "-".join(
                 [
                     (
@@ -74,6 +74,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
                 ]
                 + ["seed_{}".format(seed)]
             )
+            print(variant_name)
 
             curr_config_path = os.path.join(
                 CONFIG_DIR, exp_name, "{}.json".format(variant_name)
