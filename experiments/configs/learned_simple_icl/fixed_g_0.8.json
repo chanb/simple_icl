@@ -1,0 +1,48 @@
+{
+    "logging_config": {
+        "save_path": "./results/learned_simple_icl",
+        "experiment_name": "fixed_g_0.8",
+        "log_interval": 50,
+        "checkpoint_interval": 500
+    },
+    "model_config": {
+        "architecture": "SimpleICLModelLearned",
+        "model_kwargs": {
+            "alpha_num_examples": 8
+        }
+    },
+    "optimizer_config": {
+        "optimizer": "adam",
+        "lr": {
+            "scheduler": "constant_schedule",
+            "scheduler_kwargs": {
+                "value": 1e-3
+            }
+        },
+        "opt_kwargs": {},
+        "max_grad_norm": false,
+        "mask_names": []
+    },
+    "dataset_name": "streamblock",
+    "dataset_kwargs": {
+        "num_high_prob_classes": 1000,
+        "num_low_prob_classes": 1000,
+        "high_prob": 0.8,
+        "num_dims": 64,
+        "mode": "default",
+        "num_examples": 8,
+        "input_noise_std": 0.0,
+        "abstract_class": 1,
+        "margin": 0.99,
+        "linearly_separable": 1
+    },
+    "shuffle_buffer_size": 100,
+    "num_workers": -1,
+    "batch_size": 32,
+    "num_epochs": 50000,
+    "num_updates_per_epoch": 1,
+    "seeds": {
+        "learner_seed": 46,
+        "data_seed": 46
+    }
+}

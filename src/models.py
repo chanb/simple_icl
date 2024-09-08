@@ -234,6 +234,101 @@ class SimpleICLModelLearnedIWPredictor(Model):
         return forward
 
 
+class SimpleICLModelLearned(Model):
+    def __init__(
+        self,
+        temperature: float = 0.1,
+        alpha_num_examples: int = 0,
+    ):
+        self.alpha = nn.Dense(1)
+        self.h_fn = nn.Dense(2)
+        self.g_fn = nn.Dense(2)
+        self.temperature = temperature
+        self.alpha_num_examples = alpha_num_examples
+
+        self.forward = jax.jit(
+            self.make_forward([CONST_BATCH_STATS]), static_argnames=[CONST_EVAL]
+        )
+        self.intermediates = jax.jit(
+            self.make_forward([CONST_INTERMEDIATES], True), static_argnames=[CONST_EVAL]
+        )
+
+    def init(self, model_key, input_space, output_space):
+        alpha_key, h_key, g_key = jrandom.split(model_key, num=3)
+        query = input_space.sample()
+        target = np.zeros(2)
+
+        return {
+            "alpha": self.alpha.init(
+                alpha_key,
+                np.array([query] * (self.alpha_num_examples + 1)).flatten(),
+            ),
+            "h": self.h_fn.init(
+                h_key,
+                np.concatenate(
+                    (
+                        np.array([query] * (self.alpha_num_examples + 1)).flatten(),
+                        np.array([target] * self.alpha_num_examples).flatten(),
+                    ),
+                    axis=-1,
+                ),
+            ),
+            "g": self.g_fn.init(g_key, query),
+        }
+
+    def make_forward(
+        self,
+        mutable,
+        capture_intermediates=False,
+    ):
+
+        if self.alpha_num_examples > 0:
+
+            def alpha_forward(params, batch):
+                return self.alpha.apply(
+                    params, batch["example"].reshape((len(batch["example"]), -1))
+                )
+
+        else:
+
+            def alpha_forward(params, batch):
+                return self.alpha.apply(params, batch["example"][:, -1])
+
+        def forward(
+            params,
+            batch,
+            eval=False,
+            **kwargs,
+        ):
+            queries = batch["example"][:, -1]
+            targets = batch["target"][:, -1]
+
+            complete_context = jnp.concatenate(
+                (batch["example"], batch["target"]), axis=-1
+            ).reshape((len(queries), -1))[..., : -targets.shape[-1]]
+
+            alphas = alpha_forward(params["alpha"], batch)
+            p_iwl = jax.nn.sigmoid(alphas)
+            ic_pred = jax.nn.softmax(
+                self.h_fn.apply(params["h"], complete_context) / self.temperature,
+                axis=1,
+            )
+            iw_pred = jax.nn.softmax(
+                self.g_fn.apply(params["g"], queries) / self.temperature, axis=1
+            )
+            probs = jnp.clip((1 - p_iwl) * ic_pred + p_iwl * iw_pred, a_min=1e-8)
+            log_probs = jnp.log(probs)
+
+            return log_probs, {
+                "alpha": alphas,
+                "p_iwl": p_iwl,
+                "iw_pred": iw_pred,
+                "ic_pred": ic_pred,
+            }
+
+        return forward
+
+
 def identity(x):
     return x
 
