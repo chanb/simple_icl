@@ -62,7 +62,7 @@ def make_g(high_freq_prob: float, low_freq_prob: float):
 
     return g_fn
 
-
+# TODO: Probably non-linear alpha
 class SimpleICLModel(Model):
     def __init__(
         self,
@@ -72,7 +72,14 @@ class SimpleICLModel(Model):
         temperature: float = 0.1,
         alpha_num_examples: int = 0,
     ):
-        self.alpha = nn.Dense(1)
+        self.alpha = MLPModule(
+            layers=[64, 1],
+            activation=nn.relu,
+            output_activation=identity,
+            use_batch_norm=False,
+            use_bias=True,
+            flatten=True,
+        )
         self.h_fn = make_h(similarity)
         self.g_fn = make_g(high_freq_prob, low_freq_prob)
         self.temperature = temperature
@@ -91,7 +98,8 @@ class SimpleICLModel(Model):
                 model_key,
                 np.array(
                     [input_space.sample()] * (self.alpha_num_examples + 1)
-                ).flatten(),
+                ).flatten()[None],
+                eval=True,
             )
         }
 
@@ -105,13 +113,13 @@ class SimpleICLModel(Model):
 
             def alpha_forward(params, batch):
                 return self.alpha.apply(
-                    params, batch["example"].reshape((len(batch["example"]), -1))
+                    params, batch["example"].reshape((len(batch["example"]), -1)), eval=False
                 )
 
         else:
 
             def alpha_forward(params, batch):
-                return self.alpha.apply(params, batch["example"][:, -1])
+                return self.alpha.apply(params, batch["example"][:, -1], eval=False)
 
         def forward(
             params,
