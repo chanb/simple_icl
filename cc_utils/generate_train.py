@@ -51,11 +51,17 @@ for exp_name, exp_config in EXPERIMENTS.items():
     num_runs = 0
     dat_content = ""
 
-    variant_keys = []
-    variant_values = []
-    for variant in exp_config["variants"]:
-        variant_keys.append(variant["key"])
-        variant_values.append(variant["values"])
+    if isinstance(variant["key"], str):
+        variant_keys = []
+        variant_values = []
+        for variant in exp_config["variants"]:
+            variant_keys.append(variant["key"])
+            variant_values.append(variant["values"])
+        agg = product
+    else:
+        variant_keys = variant["key"]
+        variant_values = variant["key"]
+        agg = zip
 
     for seed in range(exp_config["num_seeds"]):
         for variant_config in product(*variant_values):
@@ -63,15 +69,6 @@ for exp_name, exp_config in EXPERIMENTS.items():
                 [
                     (
                         "{}_{}".format(variant_key, variant_value)
-                        if isinstance(variant_key, str)
-                        else "-".join(
-                            [
-                                "{}_{}".format(curr_variant_key, curr_variant_value)
-                                for curr_variant_key, curr_variant_value in zip(
-                                    variant_key, variant_value
-                                )
-                            ]
-                        )
                     )
                     for variant_key, variant_value in zip(variant_keys, variant_config)
                 ]
@@ -91,15 +88,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
                 config_dict["seeds"][seed_key] = seed
 
             for variant_key, variant_value in zip(variant_keys, variant_config):
-                if isinstance(variant_key, str):
-                    set_dict_value(config_dict, variant_key, variant_value)
-                else:
-                    for curr_variant_key, curr_variant_value in zip(
-                        variant_key, variant_value
-                    ):
-                        set_dict_value(
-                            config_dict, curr_variant_key, curr_variant_value
-                        )
+                set_dict_value(config_dict, variant_key, variant_value)
 
             json.dump(
                 config_dict,
