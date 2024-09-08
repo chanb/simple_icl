@@ -67,9 +67,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
         for variant_config in agg(*variant_values):
             variant_name = "-".join(
                 [
-                    (
-                        "{}_{}".format(variant_key, variant_value)
-                    )
+                    ("{}_{}".format(variant_key, variant_value))
                     for variant_key, variant_value in zip(variant_keys, variant_config)
                 ]
                 + ["seed_{}".format(seed)]
