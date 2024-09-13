@@ -96,14 +96,15 @@ def get_streamblock_eval_datasets(
 
         # Context length evaluations
         for prob_key in ["sample_high_prob_class_only", "sample_low_prob_class_only"]:
-            for fixed_start_pos in range(0, context_len, 1):
+            for context_key in ["sample_relevant_context", "sample_irrelevant_context"]:
                 for flip_label in [False, True]:
                     start_pos_config_dict = copy.deepcopy(config_dict)
                     modify_seed(start_pos_config_dict)
 
                     dataset_kwargs = {
                         prob_key: 1,
-                        "fixed_start_pos": fixed_start_pos,
+                        context_key: 1,
+                        "fixed_start_pos": 0 if context_key == "sample_irrelevant_context" else -1,
                         "mode": "default",
                         "flip_label": flip_label,
                     }
@@ -112,10 +113,10 @@ def get_streamblock_eval_datasets(
 
                     start_pos_config = parse_dict(start_pos_config_dict)
                     configs[
-                        "{}-{}-start_pos_{}{}".format(
+                        "{}-{}-{}{}".format(
                             split,
                             prob_key,
-                            fixed_start_pos,
+                            context_key,
                             "-flip_label" if flip_label else "",
                         )
                     ] = start_pos_config

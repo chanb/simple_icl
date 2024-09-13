@@ -235,6 +235,8 @@ class StreamBlockBiUniform:
         sample_high_prob_class_only: int = 0,
         flip_label: int = 0,
         scramble_context: int = 0,
+        sample_relevant_context: int = 0,
+        sample_irrelevant_context: int = 0,
     ):
         assert sample_low_prob_class_only + sample_high_prob_class_only <= 1
 
@@ -250,12 +252,16 @@ class StreamBlockBiUniform:
             if fixed_start_pos == -1:
                 start_pos = self.rng.choice(num_examples)
 
+            if sample_irrelevant_context:
+                start_pos = 0
+
             block_freq = self.rng.choice(
                 self.num_classes,
                 size=(2,),
                 p=weights,
             )
 
+            # TODO: Condition based on relevant vs non-relevant
             if sample_low_prob_class_only:
                 # Sample low prob. class as query only
                 block_freq[-1] = (
@@ -271,6 +277,27 @@ class StreamBlockBiUniform:
                     self.num_high_prob_classes,
                     size=(1,),
                 )
+
+            if sample_relevant_context and start_pos == 0:
+                block_freq[0] = block_freq[1]
+            elif sample_irrelevant_context and start_pos == 0:
+                if abstract_class:
+                    block_1_is_low_prob = block_freq[1] >= self.num_high_prob_classes
+                    block_freq[0] = [
+                        self.rng.choice(
+                            self.num_high_prob_classes,
+                            size=(1,),
+                        ),
+                        self.rng.choice(
+                            self.num_low_prob_classes,
+                            size=(1,),
+                        )
+                        + self.num_high_prob_classes,
+                    ][1 - block_1_is_low_prob]
+                    
+                else:
+                    while block_freq[0] == block_freq[1]:
+                        block_freq[0] = self.rng.choice(self.num_classes, size=(1,))
 
             if abstract_class:
                 # Class 0 if high-prob clusters, class 1 otherwise
@@ -351,6 +378,8 @@ def get_streamblock_seq_generator(
     stratified = getattr(dataset_kwargs, "stratified", 0)
     flip_label = getattr(dataset_kwargs, "flip_label", 0)
     scramble_context = getattr(dataset_kwargs, "scramble_context", 0)
+    sample_relevant_context = getattr(dataset_kwargs, "sample_relevant_context", 0)
+    sample_irrelevant_context = getattr(dataset_kwargs, "sample_irrelevant_context", 0)
 
     if abstract_class:
         num_classes = 2
@@ -393,6 +422,8 @@ def get_streamblock_seq_generator(
             sample_high_prob_class_only,
             flip_label,
             scramble_context,
+            sample_relevant_context,
+            sample_irrelevant_context,
         )
     else:
         raise NotImplementedError
