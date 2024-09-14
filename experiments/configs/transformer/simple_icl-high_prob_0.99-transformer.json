@@ -1,15 +1,20 @@
 {
     "logging_config": {
-        "save_path": "./results/simple_icl_model",
-        "experiment_name": "high_prob_0.99",
+        "save_path": "./results/high_prob_0.99",
+        "experiment_name": "transformer",
         "log_interval": 50,
         "checkpoint_interval": 100
     },
     "model_config": {
-        "architecture": "SimpleICLModel",
+        "architecture": "InContextSupervisedTransformer",
         "model_kwargs": {
-            "ground_truth_prob": 1.0,
-            "similarity": "l2"
+            "output_dim": 2,
+            "num_contexts": 8,
+            "num_blocks": 2,
+            "num_heads": 1,
+            "embed_dim": 64,
+            "widening_factor": 4,
+            "query_pred_only": true
         }
     },
     "optimizer_config": {
@@ -22,8 +27,9 @@
         },
         "opt_kwargs": {},
         "max_grad_norm": false,
-        "mask_names": []
+        "mask_names": ["input_tokenizer"]
     },
+    "dataset_name": "streamblock",
     "dataset_kwargs": {
         "num_high_prob_classes": 1000,
         "num_low_prob_classes": 1000,
@@ -34,15 +40,16 @@
         "input_noise_std": 0.0,
         "abstract_class": 1,
         "margin": 0.99,
-        "linearly_separable": 1
+        "linearly_separable": 1,
+        "scramble_context": 1
     },
     "shuffle_buffer_size": 100,
     "num_workers": -1,
     "batch_size": 32,
-    "num_epochs": 50000,
+    "num_epochs": 25000,
     "num_updates_per_epoch": 1,
     "seeds": {
-        "learner_seed": 42,
-        "data_seed": 42
+        "learner_seed": 46,
+        "data_seed": 46
     }
 }

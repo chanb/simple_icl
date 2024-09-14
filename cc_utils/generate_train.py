@@ -13,6 +13,7 @@ from itertools import product
 from cc_utils.configs import EXPERIMENTS
 from cc_utils.constants import (
     CONFIG_DIR,
+    HOME_DIR,
     LOG_DIR,
     RUN_REPORT_DIR,
     REPO_PATH,
@@ -50,17 +51,28 @@ for exp_name, exp_config in EXPERIMENTS.items():
     num_runs = 0
     dat_content = ""
 
-    variant_keys = []
-    variant_values = []
-    for variant in exp_config["variants"]:
-        variant_keys.append(variant["key"])
-        variant_values.append(variant["values"])
+    if isinstance(exp_config["variants"][0]["key"], str):
+        variant_keys = []
+        variant_values = []
+        for variant in exp_config["variants"]:
+            variant_keys.append(variant["key"])
+            variant_values.append(variant["values"])
+        agg = product
+    else:
+        variant_keys = exp_config["variants"][0]["key"]
+        variant_values = exp_config["variants"][0]["values"]
+        agg = zip
 
     for seed in range(exp_config["num_seeds"]):
-        for variant_config in product(*variant_values):
-            variant_name = "-".join([
-                "{}_{}".format(variant_key, variant_value) for variant_key, variant_value in zip(variant_keys, variant_config)
-            ] + ["seed_{}".format(seed)])
+        for variant_config in agg(*variant_values):
+            variant_name = "-".join(
+                [
+                    ("{}_{}".format(variant_key, variant_value))
+                    for variant_key, variant_value in zip(variant_keys, variant_config)
+                ]
+                + ["seed_{}".format(seed)]
+            )
+            print(variant_name)
 
             curr_config_path = os.path.join(
                 CONFIG_DIR, exp_name, "{}.json".format(variant_name)
@@ -94,15 +106,30 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += "#!/bin/bash\n"
     sbatch_content += "#SBATCH --account={}\n".format(CC_ACCOUNT)
     sbatch_content += "#SBATCH --time={}\n".format(exp_config["run_time"])
-    sbatch_content += "#SBATCH --cpus-per-task=1\n"
-    sbatch_content += "#SBATCH --mem=3G\n"
+
+    if exp_name.startswith("omniglot"):
+        sbatch_content += "#SBATCH --cpus-per-task=4\n"
+        sbatch_content += "#SBATCH --gres=gpu:1\n"
+        sbatch_content += "#SBATCH --mem=6G\n"
+    else:
+        sbatch_content += "#SBATCH --cpus-per-task=1\n"
+        sbatch_content += "#SBATCH --mem=3G\n"
+
     sbatch_content += "#SBATCH --array=1-{}\n".format(num_runs)
     sbatch_content += "#SBATCH --output={}/%j.out\n".format(
         os.path.join(RUN_REPORT_DIR, exp_name)
     )
-    sbatch_content += "module load StdEnv/2020\n"
-    sbatch_content += "module load python/3.10\n"
-    sbatch_content += "source ~/simple_icl/bin/activate\n"
+
+    if exp_name.startswith("omniglot"):
+        sbatch_content += "module load StdEnv/2023\n"
+        sbatch_content += "module load python/3.10\n"
+        sbatch_content += "module load cuda/12.2\n"
+        sbatch_content += "source ~/simple_icl_gpu/bin/activate\n"
+    else:
+        sbatch_content += "module load StdEnv/2020\n"
+        sbatch_content += "module load python/3.10\n"
+        sbatch_content += "source ~/simple_icl/bin/activate\n"
+
     sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
     sbatch_content += " < {}`\n".format(
         os.path.join(CONFIG_DIR, "{}.dat".format(exp_name))
@@ -112,6 +139,13 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += 'echo "Running on hostname `hostname`"\n'
     sbatch_content += "echo ${config_path}\n"
     sbatch_content += 'echo "Starting run at: `date`"\n'
+
+    if exp_name.startswith("omniglot"):
+        sbatch_content += "mkdir $SLURM_TMPDIR/tensorflow_datasets\n"
+        sbatch_content += "tar xf {} -C $SLURM_TMPDIR/tensorflow_datasets\n".format(
+            os.path.join(HOME_DIR, "tensorflow_datasets")
+        )
+
     sbatch_content += "python3 {}/src/main.py \\\n".format(REPO_PATH)
     sbatch_content += "  --config_path=${config_path} \n"
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'

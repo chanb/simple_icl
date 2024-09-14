@@ -28,7 +28,43 @@ from src.dataset import get_data_loader
 from src.utils import parse_dict, load_config, iterate_models, set_seed
 
 
-def get_eval_datasets(
+def get_omniglot_eval_datasets(
+    config_dict: Dict[str, Any],
+    test_data_seed: int,
+    context_len: int,
+    skip_test: bool = False,
+):
+    # In-weight
+    in_weight_config_dict = copy.deepcopy(config_dict)
+    in_weight_config_dict["dataset_kwargs"][
+        "task_name"
+    ] = "no_support"
+    in_weight_config = parse_dict(in_weight_config_dict)
+
+    # OOD N-shot 2-way
+    test_n_shot_2_way_config_dict = copy.deepcopy(config_dict)
+    test_n_shot_2_way_config_dict["dataset_kwargs"][
+        "task_name"
+    ] = "fewshot_holdout"
+    test_n_shot_2_way_config_dict["dataset_kwargs"][
+        "fs_shots"
+    ] = 4
+    test_n_shot_2_way_config = parse_dict(test_n_shot_2_way_config_dict)
+
+    configs = {
+        "in_weight": in_weight_config,
+        "test_n_shot_2_way": test_n_shot_2_way_config,
+    }
+
+    return {
+        eval_name: get_data_loader(
+            config
+        )
+        for eval_name, config in configs.items()
+    }, configs
+
+
+def get_streamblock_eval_datasets(
     config_dict: Dict[str, Any],
     test_data_seed: int,
     context_len: int,
@@ -60,14 +96,15 @@ def get_eval_datasets(
 
         # Context length evaluations
         for prob_key in ["sample_high_prob_class_only", "sample_low_prob_class_only"]:
-            for fixed_start_pos in range(0, context_len, 1):
+            for context_key in ["sample_relevant_context", "sample_irrelevant_context"]:
                 for flip_label in [False, True]:
                     start_pos_config_dict = copy.deepcopy(config_dict)
                     modify_seed(start_pos_config_dict)
 
                     dataset_kwargs = {
                         prob_key: 1,
-                        "fixed_start_pos": fixed_start_pos,
+                        context_key: 1,
+                        "fixed_start_pos": 0 if context_key == "sample_irrelevant_context" else -1,
                         "mode": "default",
                         "flip_label": flip_label,
                     }
@@ -76,10 +113,10 @@ def get_eval_datasets(
 
                     start_pos_config = parse_dict(start_pos_config_dict)
                     configs[
-                        "{}-{}-start_pos_{}{}".format(
+                        "{}-{}-{}{}".format(
                             split,
                             prob_key,
-                            fixed_start_pos,
+                            context_key,
                             "-flip_label" if flip_label else "",
                         )
                     ] = start_pos_config
@@ -102,16 +139,33 @@ def main(args: SimpleNamespace):
 
     config_dict, config = load_config(learner_path)
     config_dict["batch_size"] = batch_size
+    if "dataset_name" not in config_dict:
+        config_dict["dataset_name"] = "streamblock"
     config = parse_dict(config_dict)
 
-    context_len = config.dataset_kwargs.num_examples
+    if hasattr(config.model_config.model_kwargs, "num_contexts"):
+        context_len = config.model_config.model_kwargs.num_contexts
+    elif hasattr(config.dataset_kwargs, "num_examples"):
+        context_len = config.dataset_kwargs.num_examples
+    else:
+        raise NotImplementedError
+
     fixed_length = True
 
-    datasets, dataset_configs = get_eval_datasets(
-        config_dict,
-        test_data_seed,
-        context_len,
-    )
+    if config.dataset_name == "streamblock":
+        datasets, dataset_configs = get_streamblock_eval_datasets(
+            config_dict,
+            test_data_seed,
+            context_len,
+        )
+    elif config.dataset_name == "omniglot":
+        datasets, dataset_configs = get_omniglot_eval_datasets(
+            config_dict,
+            test_data_seed,
+            context_len,
+        )
+    # datasets = dict()
+    # dataset_configs = dict()
 
     train_data_loader, train_dataset = get_data_loader(
         config,

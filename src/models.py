@@ -19,7 +19,7 @@ import numpy as np
 import optax
 
 from src.constants import *
-from src.modules import GPTModule, PositionalEncoding
+from src.modules import GPTModule, PositionalEncoding, ResNetV1Module, MLPModule
 
 
 class Model(ABC):
@@ -48,14 +48,16 @@ def make_h(similarity: str):
         raise NotImplementedError
 
 
-def make_g(ground_truth_prob: float):
+def make_g(high_freq_prob: float, low_freq_prob: float):
+    dists = jnp.array(
+        [
+            [high_freq_prob, 1 - high_freq_prob],
+            [1 - low_freq_prob, low_freq_prob],
+        ],
+    )
+
     def g_fn(queries, outputs, flip_labels):
         outputs = flip_labels * (1 - outputs) + (1 - flip_labels) * outputs
-        dists = jnp.eye(outputs.shape[-1])
-        one_mask = (dists == 1).astype(float)
-        zero_mask = (dists == 0).astype(float)
-        dists = one_mask * ground_truth_prob + zero_mask * (1 - ground_truth_prob) / (outputs.shape[-1] - 1)
-
         return dists[jnp.argmax(outputs, axis=-1)]
 
     return g_fn
@@ -64,14 +66,22 @@ def make_g(ground_truth_prob: float):
 class SimpleICLModel(Model):
     def __init__(
         self,
-        ground_truth_prob: float,
+        high_freq_prob: float,
+        low_freq_prob: float,
         similarity: str,
         temperature: float = 0.1,
         alpha_num_examples: int = 0,
     ):
-        self.alpha = nn.Dense(1)
+        self.alpha = MLPModule(
+            layers=[64, 1],
+            activation=nn.relu,
+            output_activation=identity,
+            use_batch_norm=False,
+            use_bias=True,
+            flatten=True,
+        )
         self.h_fn = make_h(similarity)
-        self.g_fn = make_g(ground_truth_prob)
+        self.g_fn = make_g(high_freq_prob, low_freq_prob)
         self.temperature = temperature
         self.alpha_num_examples = alpha_num_examples
 
@@ -88,7 +98,8 @@ class SimpleICLModel(Model):
                 model_key,
                 np.array(
                     [input_space.sample()] * (self.alpha_num_examples + 1)
-                ).flatten(),
+                ).flatten()[None],
+                eval=True,
             )
         }
 
@@ -102,13 +113,13 @@ class SimpleICLModel(Model):
 
             def alpha_forward(params, batch):
                 return self.alpha.apply(
-                    params, batch["example"].reshape((len(batch["example"]), -1))
+                    params, batch["example"].reshape((len(batch["example"]), -1)), eval=False
                 )
 
         else:
 
             def alpha_forward(params, batch):
-                return self.alpha.apply(params, batch["example"][:, -1])
+                return self.alpha.apply(params, batch["example"][:, -1], eval=False)
 
         def forward(
             params,
@@ -130,8 +141,10 @@ class SimpleICLModel(Model):
                 axis=1,
             )
             iw_pred = self.g_fn(queries, targets, flip_labels)
+            probs = jnp.clip((1 - p_iwl) * ic_pred + p_iwl * iw_pred, a_min=1e-8)
+            log_probs = jnp.log(probs)
 
-            return (1 - p_iwl) * ic_pred + p_iwl * iw_pred, {
+            return log_probs, {
                 "alpha": alphas,
                 "p_iwl": p_iwl,
                 "h": similarity,
@@ -149,7 +162,14 @@ class SimpleICLModelLearnedIWPredictor(Model):
         temperature: float = 0.1,
         alpha_num_examples: int = 0,
     ):
-        self.alpha = nn.Dense(1)
+        self.alpha = MLPModule(
+            layers=[64, 1],
+            activation=nn.relu,
+            output_activation=identity,
+            use_batch_norm=False,
+            use_bias=True,
+            flatten=True,
+        )
         self.h_fn = make_h(similarity)
         self.g_fn = nn.Dense(2)
         self.temperature = temperature
@@ -170,7 +190,8 @@ class SimpleICLModelLearnedIWPredictor(Model):
                 alpha_key,
                 np.array(
                     [input_space.sample()] * (self.alpha_num_examples + 1)
-                ).flatten(),
+                ).flatten()[None],
+                eval=True,
             ),
             "g": self.g_fn.init(g_key, sample),
         }
@@ -185,13 +206,13 @@ class SimpleICLModelLearnedIWPredictor(Model):
 
             def alpha_forward(params, batch):
                 return self.alpha.apply(
-                    params, batch["example"].reshape((len(batch["example"]), -1))
+                    params, batch["example"].reshape((len(batch["example"]), -1)), eval=False
                 )
 
         else:
 
             def alpha_forward(params, batch):
-                return self.alpha.apply(params, batch["example"][:, -1])
+                return self.alpha.apply(params, batch["example"][:, -1], eval=False)
 
         def forward(
             params,
@@ -215,8 +236,10 @@ class SimpleICLModelLearnedIWPredictor(Model):
             iw_pred = jax.nn.softmax(
                 self.g_fn.apply(params["g"], queries) / self.temperature, axis=1
             )
+            probs = jnp.clip((1 - p_iwl) * ic_pred + p_iwl * iw_pred, a_min=1e-8)
+            log_probs = jnp.log(probs)
 
-            return (1 - p_iwl) * ic_pred + p_iwl * iw_pred, {
+            return log_probs, {
                 "alpha": alphas,
                 "p_iwl": p_iwl,
                 "h": similarity,
@@ -225,6 +248,105 @@ class SimpleICLModelLearnedIWPredictor(Model):
             }
 
         return forward
+
+
+class SimpleICLModelLearned(Model):
+    def __init__(
+        self,
+        temperature: float = 0.1,
+        alpha_num_examples: int = 0,
+    ):
+        self.alpha = nn.Dense(1)
+        self.h_fn = nn.Dense(2)
+        self.g_fn = nn.Dense(2)
+        self.temperature = temperature
+        self.alpha_num_examples = alpha_num_examples
+
+        self.forward = jax.jit(
+            self.make_forward([CONST_BATCH_STATS]), static_argnames=[CONST_EVAL]
+        )
+        self.intermediates = jax.jit(
+            self.make_forward([CONST_INTERMEDIATES], True), static_argnames=[CONST_EVAL]
+        )
+
+    def init(self, model_key, input_space, output_space):
+        alpha_key, h_key, g_key = jrandom.split(model_key, num=3)
+        query = input_space.sample()
+        target = np.zeros(2)
+
+        return {
+            "alpha": self.alpha.init(
+                alpha_key,
+                np.array([query] * (self.alpha_num_examples + 1)).flatten(),
+            ),
+            "h": self.h_fn.init(
+                h_key,
+                np.concatenate(
+                    (
+                        np.array([query] * (self.alpha_num_examples + 1)).flatten(),
+                        np.array([target] * self.alpha_num_examples).flatten(),
+                    ),
+                    axis=-1,
+                ),
+            ),
+            "g": self.g_fn.init(g_key, query),
+        }
+
+    def make_forward(
+        self,
+        mutable,
+        capture_intermediates=False,
+    ):
+
+        if self.alpha_num_examples > 0:
+
+            def alpha_forward(params, batch):
+                return self.alpha.apply(
+                    params, batch["example"].reshape((len(batch["example"]), -1))
+                )
+
+        else:
+
+            def alpha_forward(params, batch):
+                return self.alpha.apply(params, batch["example"][:, -1])
+
+        def forward(
+            params,
+            batch,
+            eval=False,
+            **kwargs,
+        ):
+            queries = batch["example"][:, -1]
+            targets = batch["target"][:, -1]
+
+            complete_context = jnp.concatenate(
+                (batch["example"], batch["target"]), axis=-1
+            ).reshape((len(queries), -1))[..., : -targets.shape[-1]]
+
+            alphas = alpha_forward(params["alpha"], batch)
+            p_iwl = jax.nn.sigmoid(alphas)
+            ic_pred = jax.nn.softmax(
+                self.h_fn.apply(params["h"], complete_context) / self.temperature,
+                axis=1,
+            )
+            iw_pred = jax.nn.softmax(
+                self.g_fn.apply(params["g"], queries) / self.temperature, axis=1
+            )
+            probs = jnp.clip((1 - p_iwl) * ic_pred + p_iwl * iw_pred, a_min=1e-8)
+            log_probs = jnp.log(probs)
+
+            return log_probs, {
+                "alpha": alphas,
+                "p_iwl": p_iwl,
+                "iw_pred": iw_pred,
+                "ic_pred": ic_pred,
+            }
+
+        return forward
+
+
+def identity(x):
+    return x
 
 
 class InContextSupervisedTransformer(Model):
@@ -238,6 +360,7 @@ class InContextSupervisedTransformer(Model):
         num_heads: int,
         embed_dim: int,
         widening_factor: int,
+        input_tokenizer: str = "mlp",
         query_pred_only: bool = False,
         input_output_same_encoding: bool = True,
         freeze_input_tokenizer: bool = True,
@@ -249,7 +372,31 @@ class InContextSupervisedTransformer(Model):
             embed_dim=embed_dim,
             widening_factor=widening_factor,
         )
-        self.input_tokenizer = nn.Dense(embed_dim)
+        if input_tokenizer == "mlp":
+            self.input_tokenizer = MLPModule(
+                layers=[embed_dim],
+                activation=identity,
+                output_activation=identity,
+                use_batch_norm=False,
+                use_bias=True,
+                flatten=False,
+            )
+        elif input_tokenizer == "resnet":
+            self.input_tokenizer = ResNetV1Module(
+                blocks_per_group=[2, 2, 2, 2],
+                features=[12, 32, 32, embed_dim],
+                stride=[1, 2, 2, 2],
+                use_projection=[
+                    True,
+                    True,
+                    True,
+                    True,
+                ],
+                use_bottleneck=True,
+                use_batch_norm=False,
+            )
+        else:
+            raise NotImplementedError
         self.output_tokenizer = nn.Dense(embed_dim)
         self.predictor = nn.Dense(int(np.product(output_dim)))
         self.num_tokens = num_contexts * 2 + 1
@@ -289,9 +436,7 @@ class InContextSupervisedTransformer(Model):
             :rtype: Tuple[chex.Array, chex.Array, Any]
 
             """
-            stacked_inputs, token_updates = self.tokenize(
-                params, batch, eval, **kwargs
-            )
+            stacked_inputs, token_updates = self.tokenize(params, batch, eval, **kwargs)
             (repr, gpt_updates) = self.gpt.apply(
                 params[CONST_GPT],
                 stacked_inputs,
@@ -393,16 +538,21 @@ class InContextSupervisedTransformer(Model):
         )
         dummy_token = np.zeros((1, 1, self.embed_dim))
         dummy_repr = np.zeros((1, 1, self.embed_dim))
+
         return {
             CONST_INPUT_TOKENIZER: (
                 {
                     "params": {
-                        "kernel": jnp.eye(self.embed_dim),
-                        "bias": jnp.zeros(self.embed_dim),
+                        "Dense_0": {
+                            "kernel": jnp.eye(self.embed_dim),
+                            "bias": jnp.zeros(self.embed_dim),
+                        }
                     }
                 }
                 if self.freeze_input_tokenizer
-                else self.input_tokenizer.init(input_key, input_space.sample()[None])
+                else self.input_tokenizer.init(
+                    input_key, input_space.sample()[None], eval=True
+                )
             ),
             CONST_OUTPUT_TOKENIZER: self.output_tokenizer.init(
                 output_key, np.zeros(output_space.n)[None]
@@ -445,6 +595,7 @@ class InContextSupervisedTransformer(Model):
             input_embedding, input_updates = self.input_tokenizer.apply(
                 params[CONST_INPUT_TOKENIZER],
                 batch["example"],
+                eval=eval,
                 mutable=[CONST_BATCH_STATS],
             )
 
@@ -499,9 +650,7 @@ class InContextSupervisedTransformer(Model):
             :rtype: Tuple[chex.Array, chex.Array, Any]
 
             """
-            stacked_inputs, token_updates = self.tokenize(
-                params, batch, eval, **kwargs
-            )
+            stacked_inputs, token_updates = self.tokenize(params, batch, eval, **kwargs)
             (repr, gpt_updates) = self.gpt.apply(
                 params[CONST_GPT],
                 stacked_inputs,

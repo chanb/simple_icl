@@ -1,6 +1,7 @@
 # Instructions
 
 ## Compute Canada Installation
+### CPU
 ```
 module load StdEnv/2020
 module load python/3.10
@@ -8,6 +9,26 @@ module load python/3.10
 python -m venv ~/simple_icl
 source ~/simple_icl/bin/activate
 
+pip install jax --no-index
+pip install optax flax --no-index
+pip install chex dill matplotlib tensorboard seaborn --no-index
+pip install gymnasium --no-index
+pip install torch torchvision --no-index
+pip install tensorflow --no-index
+pip install tensorflow_datasets --no-index
+pip install scikit-learn --no-index
+```
+
+### GPU
+```
+module load StdEnv/2023
+module load python/3.10
+module load cuda/12.2
+
+python -m venv ~/simple_icl_gpu
+source ~/simple_icl_gpu/bin/activate
+
+pip install --upgrade pip --no-index
 pip install jax --no-index
 pip install optax flax --no-index
 pip install chex dill matplotlib tensorboard seaborn --no-index

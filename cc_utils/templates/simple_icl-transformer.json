@@ -6,24 +6,31 @@
         "checkpoint_interval": 100
     },
     "model_config": {
-        "architecture": "SimpleICLModel",
+        "architecture": "InContextSupervisedTransformer",
         "model_kwargs": {
-            "ground_truth_prob": 1.0,
-            "similarity": "l2"
+            "output_dim": 2,
+            "num_contexts": 8,
+            "num_blocks": 2,
+            "num_heads": 1,
+            "embed_dim": 64,
+            "widening_factor": 4,
+            "query_pred_only": true
         }
     },
     "optimizer_config": {
         "optimizer": "adam",
         "lr": {
-            "scheduler": "constant_schedule",
+            "scheduler": "linear_warmup_sqrt_decay",
             "scheduler_kwargs": {
-                "value": 3e-4
+                "max_lr": 3e-4,
+                "warmup_steps": 4000
             }
         },
         "opt_kwargs": {},
         "max_grad_norm": false,
-        "mask_names": []
+        "mask_names": ["input_tokenizer"]
     },
+    "dataset_name": "streamblock",
     "dataset_kwargs": {
         "num_high_prob_classes": 1000,
         "num_low_prob_classes": 1000,
