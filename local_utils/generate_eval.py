@@ -33,8 +33,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
         num_runs += 1
 
         sbatch_content += "python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
-        sbatch_content += "  --learner_path=${learner_path} \\\n"
-        sbatch_content += "  --save_path={} \n".format(os.path.join(EVAL_DIR, exp_name))
+        sbatch_content += "  --learner_path={} \\\n".format(learner_path)
+        sbatch_content += "  --save_path={} &\n".format(os.path.join(EVAL_DIR, exp_name))
 
         if num_runs % NUM_PARALLEL == 0:
             sbatch_content += "wait\n"

@@ -12,6 +12,7 @@ from types import SimpleNamespace
 from typing import Any, Callable, Dict, Tuple, Union
 
 import chex
+import dill
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
@@ -19,7 +20,7 @@ import numpy as np
 import optax
 
 from src.constants import *
-from src.modules import GPTModule, PositionalEncoding, ResNetV1Module, MLPModule
+from src.modules import GPTModule, PositionalEncoding, ResNetV1Module, MLPModule, Temperature
 
 
 class Model(ABC):
@@ -48,42 +49,19 @@ def make_h(similarity: str):
         raise NotImplementedError
 
 
-def make_g(high_freq_prob: float, low_freq_prob: float):
-    dists = jnp.array(
-        [
-            [high_freq_prob, 1 - high_freq_prob],
-            [1 - low_freq_prob, low_freq_prob],
-        ],
-    )
-
-    def g_fn(queries, outputs, flip_labels):
-        outputs = flip_labels * (1 - outputs) + (1 - flip_labels) * outputs
-        return dists[jnp.argmax(outputs, axis=-1)]
-
-    return g_fn
-
-
-class SimpleICLModel(Model):
+class IWPredictor(Model):
     def __init__(
         self,
-        high_freq_prob: float,
-        low_freq_prob: float,
-        similarity: str,
-        temperature: float = 0.1,
-        alpha_num_examples: int = 0,
+        output_dim: int,
     ):
-        self.alpha = MLPModule(
-            layers=[64, 1],
+        self.iw_predictor = MLPModule(
+            layers=[64, 64, output_dim],
             activation=nn.relu,
             output_activation=identity,
             use_batch_norm=False,
             use_bias=True,
             flatten=True,
         )
-        self.h_fn = make_h(similarity)
-        self.g_fn = make_g(high_freq_prob, low_freq_prob)
-        self.temperature = temperature
-        self.alpha_num_examples = alpha_num_examples
 
         self.forward = jax.jit(
             self.make_forward([CONST_BATCH_STATS]), static_argnames=[CONST_EVAL]
@@ -93,107 +71,13 @@ class SimpleICLModel(Model):
         )
 
     def init(self, model_key, input_space, output_space):
+        iw_pred_key = jrandom.split(model_key)[0]
         return {
-            "alpha": self.alpha.init(
-                model_key,
-                np.array(
-                    [input_space.sample()] * (self.alpha_num_examples + 1)
-                ).flatten()[None],
-                eval=True,
-            )
-        }
-
-    def make_forward(
-        self,
-        mutable,
-        capture_intermediates=False,
-    ):
-
-        if self.alpha_num_examples > 0:
-
-            def alpha_forward(params, batch):
-                return self.alpha.apply(
-                    params, batch["example"].reshape((len(batch["example"]), -1)), eval=False
-                )
-
-        else:
-
-            def alpha_forward(params, batch):
-                return self.alpha.apply(params, batch["example"][:, -1], eval=False)
-
-        def forward(
-            params,
-            batch,
-            eval=False,
-            **kwargs,
-        ):
-            queries = batch["example"][:, -1]
-            targets = batch["target"][:, -1]
-            flip_labels = batch["flip_label"][:, None]
-            context_inputs = batch["example"][:, :-1]
-            context_targets = batch["target"][:, :-1]
-
-            alphas = alpha_forward(params["alpha"], batch)
-            p_iwl = jax.nn.sigmoid(alphas)
-            similarity = self.h_fn(context_inputs, queries[:, None])
-            ic_pred = jnp.sum(
-                jax.nn.softmax(similarity / self.temperature, axis=1) * context_targets,
-                axis=1,
-            )
-            iw_pred = self.g_fn(queries, targets, flip_labels)
-            probs = jnp.clip((1 - p_iwl) * ic_pred + p_iwl * iw_pred, a_min=1e-8)
-            log_probs = jnp.log(probs)
-
-            return log_probs, {
-                "alpha": alphas,
-                "p_iwl": p_iwl,
-                "h": similarity,
-                "iw_pred": iw_pred,
-                "ic_pred": ic_pred,
-            }
-
-        return forward
-
-
-class SimpleICLModelLearnedIWPredictor(Model):
-    def __init__(
-        self,
-        similarity: str,
-        temperature: float = 0.1,
-        alpha_num_examples: int = 0,
-    ):
-        self.alpha = MLPModule(
-            layers=[64, 1],
-            activation=nn.relu,
-            output_activation=identity,
-            use_batch_norm=False,
-            use_bias=True,
-            flatten=True,
-        )
-        self.h_fn = make_h(similarity)
-        self.g_fn = nn.Dense(2)
-        self.temperature = temperature
-        self.alpha_num_examples = alpha_num_examples
-
-        self.forward = jax.jit(
-            self.make_forward([CONST_BATCH_STATS]), static_argnames=[CONST_EVAL]
-        )
-        self.intermediates = jax.jit(
-            self.make_forward([CONST_INTERMEDIATES], True), static_argnames=[CONST_EVAL]
-        )
-
-    def init(self, model_key, input_space, output_space):
-        alpha_key, g_key = jrandom.split(model_key)
-        sample = input_space.sample()
-        return {
-            "alpha": self.alpha.init(
-                alpha_key,
-                np.array(
-                    [input_space.sample()] * (self.alpha_num_examples + 1)
-                ).flatten()[None],
+            "iw_predictor": self.iw_predictor.init(
+                iw_pred_key,
+                input_space.sample()[None],
                 eval=True,
             ),
-            "g": self.g_fn.init(g_key, sample),
         }
 
     def make_forward(
@@ -201,19 +85,6 @@ class SimpleICLModelLearnedIWPredictor(Model):
         mutable,
         capture_intermediates=False,
     ):
-
-        if self.alpha_num_examples > 0:
-
-            def alpha_forward(params, batch):
-                return self.alpha.apply(
-                    params, batch["example"].reshape((len(batch["example"]), -1)), eval=False
-                )
-
-        else:
-
-            def alpha_forward(params, batch):
-                return self.alpha.apply(params, batch["example"][:, -1], eval=False)
-
         def forward(
             params,
             batch,
@@ -221,46 +92,27 @@ class SimpleICLModelLearnedIWPredictor(Model):
             **kwargs,
         ):
             queries = batch["example"][:, -1]
-            targets = batch["target"][:, -1]
-            flip_labels = batch["flip_label"][:, None]
-            context_inputs = batch["example"][:, :-1]
-            context_targets = batch["target"][:, :-1]
-
-            alphas = alpha_forward(params["alpha"], batch)
-            p_iwl = jax.nn.sigmoid(alphas)
-            similarity = self.h_fn(context_inputs, queries[:, None])
-            ic_pred = jnp.sum(
-                jax.nn.softmax(similarity / self.temperature, axis=1) * context_targets,
-                axis=1,
+            logits = self.iw_predictor.apply(
+                params["iw_predictor"],
+                queries,
+                eval=eval,
             )
-            iw_pred = jax.nn.softmax(
-                self.g_fn.apply(params["g"], queries) / self.temperature, axis=1
-            )
-            probs = jnp.clip((1 - p_iwl) * ic_pred + p_iwl * iw_pred, a_min=1e-8)
-            log_probs = jnp.log(probs)
 
-            return log_probs, {
-                "alpha": alphas,
-                "p_iwl": p_iwl,
-                "h": similarity,
-                "iw_pred": iw_pred,
-                "ic_pred": ic_pred,
+            return logits, {
+                "probs": jax.nn.softmax(logits, axis=-1),
             }
 
         return forward
 
 
-class SimpleICLModelLearned(Model):
+class ICPredictor(Model):
     def __init__(
         self,
-        temperature: float = 0.1,
-        alpha_num_examples: int = 0,
+        output_dim: int,
+        similarity: str = "l2",
     ):
-        self.alpha = nn.Dense(1)
-        self.h_fn = nn.Dense(2)
-        self.g_fn = nn.Dense(2)
-        self.temperature = temperature
-        self.alpha_num_examples = alpha_num_examples
+        self.similarity = make_h(similarity)
+        self.temperature = Temperature()
 
         self.forward = jax.jit(
             self.make_forward([CONST_BATCH_STATS]), static_argnames=[CONST_EVAL]
@@ -270,26 +122,95 @@ class SimpleICLModelLearned(Model):
         )
 
     def init(self, model_key, input_space, output_space):
-        alpha_key, h_key, g_key = jrandom.split(model_key, num=3)
+        temp_key = jrandom.split(model_key)[0]
+        return {
+            "ic_predictor": self.temperature.init(
+                temp_key,
+            ),
+        }
+
+    def make_forward(
+        self,
+        mutable,
+        capture_intermediates=False,
+    ):
+        def forward(
+            params,
+            batch,
+            eval=False,
+            **kwargs,
+        ):
+            queries = batch["example"][:, -1]
+            context_inputs = batch["example"][:, :-1]
+            context_targets = batch["target"][:, :-1]
+
+            similarity = self.h_fn(context_inputs, queries[:, None])
+            temp = self.temperature.apply(params["ic_predictor"])
+            ic_pred = jnp.sum(
+                jax.nn.softmax(similarity / (temp + 1e-8), axis=1) * context_targets,
+                axis=1,
+            )
+            log_probs = jnp.log(ic_pred)
+
+            return log_probs, {
+                "probs": ic_pred,
+                "similarity": similarity,
+            }
+
+        return forward
+
+
+class SimpleICL(Model):
+    def __init__(
+        self,
+        output_dim: int,
+        alpha_num_examples: int = 0,
+        similarity: str = "l2",
+        load_iw: str = None,
+        load_ic: str = None,
+    ):
+        self.alpha = MLPModule(
+            layers=[64, 64, 1],
+            activation=nn.relu,
+            output_activation=identity,
+            use_batch_norm=False,
+            use_bias=True,
+            flatten=True,
+        )
+        self.iw_predictor = IWPredictor(output_dim)
+        self.ic_predictor = ICPredictor(output_dim, similarity)
+        self.alpha_num_examples = alpha_num_examples
+        self.load_iw = load_iw
+        self.load_ic = load_ic
+
+        self.forward = jax.jit(
+            self.make_forward([CONST_BATCH_STATS]), static_argnames=[CONST_EVAL]
+        )
+        self.intermediates = jax.jit(
+            self.make_forward([CONST_INTERMEDIATES], True), static_argnames=[CONST_EVAL]
+        )
+
+    def init(self, model_key, input_space, output_space):
+        alpha_key, ic_key, iw_key = jrandom.split(model_key, num=3)
         query = input_space.sample()
-        target = np.zeros(2)
+
+        if self.load_ic:
+            ic_predictor_params = dill.load(open(self.load_ic, "rb"))[CONST_MODEL]
+        else:
+            ic_predictor_params = self.ic_predictor.init(ic_key, input_space, output_space)
+
+        if self.load_iw:
+            iw_predictor_params = dill.load(open(self.load_iw, "rb"))[CONST_MODEL]
+        else:
+            iw_predictor_params = self.iw_predictor.init(iw_key, input_space, output_space)
 
         return {
             "alpha": self.alpha.init(
                 alpha_key,
                 np.array([query] * (self.alpha_num_examples + 1)).flatten(),
             ),
-            "h": self.h_fn.init(
-                h_key,
-                np.concatenate(
-                    (
-                        np.array([query] * (self.alpha_num_examples + 1)).flatten(),
-                        np.array([target] * self.alpha_num_examples).flatten(),
-                    ),
-                    axis=-1,
-                ),
-            ),
-            "g": self.g_fn.init(g_key, query),
+            "iw_predictor": iw_predictor_params,
+            "ic_predictor": ic_predictor_params,
         }
 
     def make_forward(
@@ -325,13 +246,22 @@ class SimpleICLModelLearned(Model):
 
             alphas = alpha_forward(params["alpha"], batch)
             p_iwl = jax.nn.sigmoid(alphas)
-            ic_pred = jax.nn.softmax(
-                self.h_fn.apply(params["h"], complete_context) / self.temperature,
-                axis=1,
+
+            _, iw_updates = self.iw_predictor.forward(
+                params["iw_predictor"],
+                batch,
+                eval=eval,
             )
-            iw_pred = jax.nn.softmax(
-                self.g_fn.apply(params["g"], queries) / self.temperature, axis=1
+
+            _, ic_updates = self.ic_predictor.forward(
+                params["ic_predictor"],
+                batch,
+                eval=eval,
             )
+
+            iw_pred = iw_updates["probs"]
+            ic_pred = ic_updates["probs"]
+
             probs = jnp.clip((1 - p_iwl) * ic_pred + p_iwl * iw_pred, a_min=1e-8)
             log_probs = jnp.log(probs)
 

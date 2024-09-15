@@ -1,6 +1,6 @@
 EXPERIMENTS = {
     "synthetic-transformer": {
-        "num_seeds": 10,
+        "num_seeds": 5,
         "variants": [
             {
                 "key": "p_high",
