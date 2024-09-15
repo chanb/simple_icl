@@ -144,13 +144,13 @@ class ICPredictor(Model):
             context_inputs = batch["example"][:, :-1]
             context_targets = batch["target"][:, :-1]
 
-            similarity = self.h_fn(context_inputs, queries[:, None])
+            similarity = self.similarity(context_inputs, queries[:, None])
             temp = self.temperature.apply(params["ic_predictor"])
             ic_pred = jnp.sum(
-                jax.nn.softmax(similarity / (temp + 1e-8), axis=1) * context_targets,
+                jax.nn.softmax(similarity / (jnp.exp(temp) + 1e-8), axis=1) * context_targets,
                 axis=1,
             )
-            log_probs = jnp.log(ic_pred)
+            log_probs = jnp.log(jnp.clip(ic_pred, a_min=1e-7))
 
             return log_probs, {
                 "probs": ic_pred,
@@ -207,7 +207,8 @@ class SimpleICL(Model):
         return {
             "alpha": self.alpha.init(
                 alpha_key,
-                np.array([query] * (self.alpha_num_examples + 1)).flatten(),
+                np.array([query] * (self.alpha_num_examples + 1)).flatten()[None],
+                eval=True,
             ),
             "iw_predictor": iw_predictor_params,
             "ic_predictor": ic_predictor_params,
@@ -223,13 +224,13 @@ class SimpleICL(Model):
 
             def alpha_forward(params, batch):
                 return self.alpha.apply(
-                    params, batch["example"].reshape((len(batch["example"]), -1))
+                    params, batch["example"].reshape((len(batch["example"]), -1)), eval=False
                 )
 
         else:
 
             def alpha_forward(params, batch):
-                return self.alpha.apply(params, batch["example"][:, -1])
+                return self.alpha.apply(params, batch["example"][:, -1], eval=False)
 
         def forward(
             params,
@@ -237,13 +238,6 @@ class SimpleICL(Model):
             eval=False,
             **kwargs,
         ):
-            queries = batch["example"][:, -1]
-            targets = batch["target"][:, -1]
-
-            complete_context = jnp.concatenate(
-                (batch["example"], batch["target"]), axis=-1
-            ).reshape((len(queries), -1))[..., : -targets.shape[-1]]
-
             alphas = alpha_forward(params["alpha"], batch)
             p_iwl = jax.nn.sigmoid(alphas)
 
