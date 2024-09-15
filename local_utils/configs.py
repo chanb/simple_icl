@@ -1,11 +1,10 @@
 EXPERIMENTS = {
     "synthetic-transformer": {
-        "run_time": "00:15:00",
         "num_seeds": 10,
         "variants": [
             {
                 "key": "p_high",
-                "values": [0.5, 0.67, 0.75, 0.8, 0.9, 0.99]
+                "values": [0.9]
             },
             {
                 "key": "dataset_size",

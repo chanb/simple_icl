@@ -1,0 +1,56 @@
+{
+    "logging_config": {
+        "save_path": "<TO_FILL>",
+        "experiment_name": "<TO_FILL>",
+        "log_interval": 50,
+        "checkpoint_interval": 100
+    },
+    "model_config": {
+        "architecture": "InContextSupervisedTransformer",
+        "model_kwargs": {
+            "output_dim": 1623,
+            "num_contexts": 8,
+            "num_blocks": 2,
+            "num_heads": 1,
+            "embed_dim": 64,
+            "widening_factor": 4,
+            "input_tokenizer": "resnet",
+            "query_pred_only": true,
+            "freeze_input_tokenizer": false
+        }
+    },
+    "optimizer_config": {
+        "optimizer": "adam",
+        "lr": {
+            "scheduler": "linear_warmup_sqrt_decay",
+            "scheduler_kwargs": {
+                "max_lr": 3e-4,
+                "warmup_steps": 4000
+            }
+        },
+        "opt_kwargs": {},
+        "max_grad_norm": false,
+        "mask_names": []
+    },
+    "dataset_name": "omniglot",
+    "dataset_kwargs": {
+        "task_name": "bursty",
+        "task_config": {
+            "exemplars": "single",
+            "noise_scale": 0.1
+        },
+        "sequence_length": 9,
+        "p_bursty": 0.5,
+        "bursty_shots": 3,
+        "ways": 2
+    },
+    "shuffle_buffer_size": 100,
+    "num_workers": -1,
+    "batch_size": 32,
+    "num_epochs": 50000,
+    "num_updates_per_epoch": 1,
+    "seeds": {
+        "learner_seed": 46,
+        "data_seed": 46
+    }
+}
