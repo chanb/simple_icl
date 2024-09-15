@@ -3,7 +3,7 @@
         "save_path": "<TO_FILL>",
         "experiment_name": "<TO_FILL>",
         "log_interval": 50,
-        "checkpoint_interval": 50
+        "checkpoint_interval": 100
     },
     "model_config": {
         "architecture": "InContextSupervisedTransformer",
