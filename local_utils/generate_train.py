@@ -86,6 +86,27 @@ for exp_name, exp_config in EXPERIMENTS.items():
             for variant_key, variant_value in zip(variant_keys, variant_config):
                 set_dict_value(config_dict, variant_key, variant_value)
 
+            if exp_name == "synthetic-alpha":
+                for (load_key, load_name) in (
+                    ("load_iw", "synthetic-iw_predictor"),
+                    ("load_ic", "synthetic-ic_predictor")
+                ):
+                    result_dir = os.path.join(LOG_DIR, load_name)
+                    if not os.path.isdir(result_dir):
+                        print("cannot find {} to load".format(load_name))
+                        continue
+
+                    for learner_path in os.listdir(result_dir):
+                        if not learner_path.startswith(variant_name):
+                            continue
+
+                        config_dict["model_config"]["model_kwargs"][load_key] = os.path.join(
+                            result_dir, learner_path, "models", "50000.dill"
+                        )
+                        break
+                    else:
+                        print("cannot find {} to load".format(load_name))
+
             json.dump(
                 config_dict,
                 open(curr_config_path, "w"),
