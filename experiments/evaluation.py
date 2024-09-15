@@ -178,6 +178,8 @@ def main(args: SimpleNamespace):
         context_len = config.model_config.model_kwargs.num_contexts
     elif hasattr(config.dataset_kwargs, "num_examples"):
         context_len = config.dataset_kwargs.num_examples
+    elif hasattr(config.dataset_kwargs, "num_contexts"):
+        context_len = config.dataset_kwargs.num_contexts
     else:
         raise NotImplementedError
 
