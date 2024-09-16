@@ -15,7 +15,7 @@ from local_utils.constants import (
     REPO_PATH,
 )
 
-NUM_PARALLEL = 5
+NUM_PARALLEL = 10
 
 sbatch_dir = "./sbatch_scripts"
 os.makedirs(sbatch_dir, exist_ok=True)
