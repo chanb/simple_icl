@@ -232,6 +232,7 @@ def get_synthetic_seq_generator(
         dataset_kwargs.train,
         getattr(dataset_kwargs, "conditioning", "none"),
         dataset_kwargs.input_noise_std,
+        getattr(dataset_kwargs, "label_noise", 0.0),
     )
     num_classes = dataset_kwargs.num_low_prob_classes + dataset_kwargs.num_high_prob_classes
 

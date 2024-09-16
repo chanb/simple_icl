@@ -4,7 +4,7 @@ EXPERIMENTS = {
         "variants": [
             {
                 "key": "p_high",
-                "values": [0.9]
+                "values": [0.5, 0.75, 0.9, 0.99]
             },
             {
                 "key": "dataset_size",
@@ -12,7 +12,7 @@ EXPERIMENTS = {
             },
             {
                 "key": "p_relevant_context",
-                "values": [0.0, 0.9, 1.0]
+                "values": [0.0, 0.1, 0.5, 0.9, 1.0]
             },
         ]
     },
@@ -21,7 +21,7 @@ EXPERIMENTS = {
         "variants": [
             {
                 "key": "p_high",
-                "values": [0.9]
+                "values": [0.5, 0.75, 0.9, 0.99]
             },
             {
                 "key": "dataset_size",
@@ -29,7 +29,7 @@ EXPERIMENTS = {
             },
             {
                 "key": "p_relevant_context",
-                "values": [0.9]
+                "values": [0.0]
             },
         ]
     },
@@ -38,7 +38,7 @@ EXPERIMENTS = {
         "variants": [
             {
                 "key": "p_high",
-                "values": [0.9]
+                "values": [0.5, 0.75, 0.9, 0.99]
             },
             {
                 "key": "dataset_size",
@@ -46,7 +46,7 @@ EXPERIMENTS = {
             },
             {
                 "key": "p_relevant_context",
-                "values": [0.9]
+                "values": [0.5, 0.75, 0.9, 0.99]
             },
         ]
     },
@@ -55,7 +55,7 @@ EXPERIMENTS = {
         "variants": [
             {
                 "key": "p_high",
-                "values": [0.9]
+                "values": [0.5, 0.75, 0.9, 0.99]
             },
             {
                 "key": "dataset_size",
@@ -63,7 +63,7 @@ EXPERIMENTS = {
             },
             {
                 "key": "p_relevant_context",
-                "values": [0.9]
+                "values": [0.5, 0.75, 0.9, 0.99]
             },
         ]
     },

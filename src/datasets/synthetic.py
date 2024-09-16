@@ -30,6 +30,7 @@ class Synthetic:
         train: bool,
         conditioning: str = "none",
         input_noise_std: float = 0.0,
+        label_noise: float = 0.0,
     ):
         assert 0.0 < p_high < 1.0
         assert (
@@ -46,6 +47,7 @@ class Synthetic:
         self.train = train
         self.seed = seed
         self.input_noise_std = input_noise_std
+        self.label_noise = label_noise
         self.num_contexts = num_contexts
         self.conditioning = conditioning
         self.rng = np.random.RandomState(seed)
@@ -84,6 +86,7 @@ class Synthetic:
             size=(self.dataset_size, self.num_contexts + 1),
             p=weights,
         )
+        self.swap_labels = rng.uniform(size=self.targets.shape) < self.label_noise
 
         if self.conditioning == "high_prob":
             self.targets[..., -1] = rng.choice(
@@ -144,10 +147,14 @@ class Synthetic:
             sample_i = self.rng.choice(self.dataset_size)
             
             example = self.inputs[sample_i]
+
+            swap_label = self.swap_labels[sample_i]
             label = self.targets[sample_i]
+            label = np.where(swap_label, (label + 1) % self.num_classes, label)
 
             if flip_label:
                 label = (label + 1) % self.num_classes
+                
             label = np.eye(num_classes)[label]
 
             yield {

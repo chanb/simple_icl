@@ -97,8 +97,20 @@ for exp_name, exp_config in EXPERIMENTS.items():
                         continue
 
                     for learner_path in os.listdir(result_dir):
-                        if not learner_path.startswith(variant_name):
-                            continue
+                        if load_key == "load_iw":
+                            include = True
+                            for curr_attr in variant_name.split("-"):
+                                if "p_relevant_context" in curr_attr:
+                                    continue
+
+                                if curr_attr not in learner_path:
+                                    include = False
+                                    break
+                            if not include:
+                                continue
+                        else:
+                            if not learner_path.startswith(variant_name):
+                                continue
 
                         config_dict["model_config"]["model_kwargs"][load_key] = os.path.join(
                             result_dir, learner_path, "models", "50000.dill"
