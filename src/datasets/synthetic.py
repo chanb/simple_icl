@@ -11,11 +11,6 @@ from gymnasium import spaces
 import numpy as np
 import timeit
 
-"""
-TODO:
-- Add mode for training IW transformer: This should set context to zero.
-"""
-
 
 class Synthetic:
     def __init__(

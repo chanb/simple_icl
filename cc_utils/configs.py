@@ -13,7 +13,7 @@ EXPERIMENTS = {
                 "values": [2**6, 2**8, 2**10, 2**12, 2**14]
             },
             {
-                "key": "context_len",
+                "key": "num_contexts",
                 "values": [2, 4, 8]
             },
             {
