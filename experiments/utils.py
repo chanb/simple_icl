@@ -53,6 +53,10 @@ def get_preds_labels(model, params, prefetched_data, max_label=None):
             all_auxes.setdefault(aux_key, [])
             all_auxes[aux_key].append(model_aux[aux_key])
 
+        if "label_dist" in batch:
+            all_auxes.setdefault("label_dist", [])
+            all_auxes["label_dist"].append(batch["label_dist"])
+
         all_auxes.setdefault("context contains query class", [])
         all_auxes["context contains query class"].append(
             np.sum(contexts == labels[:, None], axis=-1) > 0
@@ -63,12 +67,14 @@ def get_preds_labels(model, params, prefetched_data, max_label=None):
     all_labels = np.concatenate(all_labels)
 
     try:
-        all_auxes = {k: np.concatenate(v) for k, v in all_auxes.items()}
+        ret_auxes = {k: np.concatenate(v) for k, v in all_auxes.items()}
     except:
-        all_auxes = {
+        ret_auxes = {
             "context contains query class": np.concatenate(all_auxes["context contains query class"])
         }
-    return all_preds, all_labels, all_outputs, all_auxes
+        if "label_dist" in batch:
+            ret_auxes["label_dist"] = np.concatenate(all_auxes["label_dist"])
+    return all_preds, all_labels, all_outputs, ret_auxes
 
 
 # Check model accuracy
@@ -84,11 +90,19 @@ def print_performance_with_aux(
     conf_mat = confusion_matrix(all_labels, all_preds, labels=np.arange(output_dim))
     auxes = {}
     acc = np.trace(conf_mat) / np.sum(conf_mat) * 100
-    loss = np.mean(
-        optax.softmax_cross_entropy(
-            all_outputs, jax.nn.one_hot(all_labels, num_classes=output_dim)
+
+    if "label_dist" in all_auxes:
+        loss = np.mean(
+            optax.softmax_cross_entropy(
+                all_outputs, all_auxes["label_dist"]
+            )
         )
-    )
+    else:
+        loss = np.mean(
+            optax.softmax_cross_entropy(
+                all_outputs, jax.nn.one_hot(all_labels, num_classes=output_dim)
+            )
+        )
 
     auxes = {
         "accuracy": acc,

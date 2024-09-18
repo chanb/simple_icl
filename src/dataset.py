@@ -231,34 +231,36 @@ def get_synthetic_seq_generator(
         seed,
         dataset_kwargs.train,
         getattr(dataset_kwargs, "conditioning", "none"),
-        dataset_kwargs.input_noise_std,
+        getattr(dataset_kwargs, "input_noise_std", 0.0),
         getattr(dataset_kwargs, "label_noise", 0.0),
+        getattr(dataset_kwargs, "num_relevant_contexts", None),
     )
-    num_classes = dataset_kwargs.num_low_prob_classes + dataset_kwargs.num_high_prob_classes
+    num_classes = (
+        dataset_kwargs.num_low_prob_classes + dataset_kwargs.num_high_prob_classes
+    )
 
     dataset = tf.data.Dataset.from_generator(
         task.get_sequences,
-        args=(
-            getattr(dataset_kwargs, "flip_label", 0),
-            getattr(dataset_kwargs, "abstract_class", 0),
-        ),
+        args=(getattr(dataset_kwargs, "flip_label", 0),),
         output_signature={
             "example": tf.TensorSpec(
-                shape=(dataset_kwargs.num_contexts + 1, dataset_kwargs.num_dims), dtype=tf.dtypes.float32
+                shape=(dataset_kwargs.num_contexts + 1, dataset_kwargs.num_dims),
+                dtype=tf.dtypes.float32,
             ),
             "label": tf.TensorSpec(
-                shape=(
-                    dataset_kwargs.num_contexts + 1,
-                    2 if getattr(dataset_kwargs, "abstract_class", 0) else num_classes
-                ),
+                shape=(dataset_kwargs.num_contexts + 1, num_classes),
                 dtype=tf.dtypes.int32,
+            ),
+            "label_dist": tf.TensorSpec(
+                shape=(num_classes,),
+                dtype=tf.dtypes.float32,
             ),
         },
     )
     return TFDataset(
         dataset,
         task.input_space,
-        spaces.Discrete(2) if getattr(dataset_kwargs, "abstract_class", 0) else task.output_space,
+        task.output_space,
     )
 
 
@@ -286,6 +288,11 @@ def prepare_seqs_for_icl(ds, num_classes: int):
         if "flip_label" in example:
             flip_labels = tf.cast(example["flip_label"], tf.int8)
             ret_dict["flip_label"] = flip_labels
+
+        if "label_dist" in example:
+            label_dists = tf.cast(example["label_dist"], tf.float32)
+            ret_dict["label_dist"] = label_dists
+
         return tf.data.Dataset.from_tensors(ret_dict)
 
     return ds.flat_map(_convert_dict)

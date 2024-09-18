@@ -268,7 +268,7 @@ class StreamBlockBiUniform:
                         )
                         + self.num_high_prob_classes,
                     ][1 - block_1_is_low_prob]
-                    
+
                 else:
                     while block_freq[0] == block_freq[1]:
                         block_freq[0] = self.rng.choice(self.num_classes, size=(1,))

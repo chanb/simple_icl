@@ -20,7 +20,13 @@ import numpy as np
 import optax
 
 from src.constants import *
-from src.modules import GPTModule, PositionalEncoding, ResNetV1Module, MLPModule, Temperature
+from src.modules import (
+    GPTModule,
+    PositionalEncoding,
+    ResNetV1Module,
+    MLPModule,
+    Temperature,
+)
 
 
 class Model(ABC):
@@ -147,7 +153,8 @@ class ICPredictor(Model):
             similarity = self.similarity(context_inputs, queries[:, None])
             temp = self.temperature.apply(params["ic_predictor"])
             ic_pred = jnp.sum(
-                jax.nn.softmax(similarity / (jnp.exp(temp) + 1e-8), axis=1) * context_targets,
+                jax.nn.softmax(similarity / (jnp.exp(temp) + 1e-8), axis=1)
+                * context_targets,
                 axis=1,
             )
             log_probs = jnp.log(jnp.clip(ic_pred, a_min=1e-7))
@@ -197,12 +204,16 @@ class SimpleICL(Model):
         if self.load_ic:
             ic_predictor_params = dill.load(open(self.load_ic, "rb"))[CONST_MODEL]
         else:
-            ic_predictor_params = self.ic_predictor.init(ic_key, input_space, output_space)
+            ic_predictor_params = self.ic_predictor.init(
+                ic_key, input_space, output_space
+            )
 
         if self.load_iw:
             iw_predictor_params = dill.load(open(self.load_iw, "rb"))[CONST_MODEL]
         else:
-            iw_predictor_params = self.iw_predictor.init(iw_key, input_space, output_space)
+            iw_predictor_params = self.iw_predictor.init(
+                iw_key, input_space, output_space
+            )
 
         return {
             "alpha": self.alpha.init(
@@ -224,7 +235,9 @@ class SimpleICL(Model):
 
             def alpha_forward(params, batch):
                 return self.alpha.apply(
-                    params, batch["example"].reshape((len(batch["example"]), -1)), eval=False
+                    params,
+                    batch["example"].reshape((len(batch["example"]), -1)),
+                    eval=False,
                 )
 
         else:

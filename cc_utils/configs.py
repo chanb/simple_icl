@@ -1,22 +1,4 @@
 EXPERIMENTS = {
-    "synthetic-transformer": {
-        "run_time": "00:15:00",
-        "num_seeds": 5,
-        "variants": [
-            {
-                "key": "p_high",
-                "values": [0.5, 0.67, 0.75, 0.8, 0.9]
-            },
-            {
-                "key": "dataset_size",
-                "values": [2**6, 2**8, 2**10, 2**12, 2**14]
-            },
-            {
-                "key": "p_relevant_context",
-                "values": [0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0]
-            },
-        ]
-    },
     "synthetic-transformer-context_len": {
         "run_time": "00:15:00",
         "num_seeds": 5,
@@ -39,13 +21,13 @@ EXPERIMENTS = {
             },
         ]
     },
-    "synthetic-iw_predictor": {
+    "synthetic-transformer-no_noise": {
         "run_time": "00:15:00",
         "num_seeds": 5,
         "variants": [
             {
                 "key": "p_high",
-                "values": [0.5, 0.67, 0.75, 0.8, 0.9]
+                "values": [0.9]
             },
             {
                 "key": "dataset_size",
@@ -53,17 +35,17 @@ EXPERIMENTS = {
             },
             {
                 "key": "p_relevant_context",
-                "values": [0.0]
+                "values": [0.0, 0.9, 1.0]
             },
         ]
     },
-    "synthetic-ic_predictor": {
+    "synthetic-transformer-noisy_inputs_0.2": {
         "run_time": "00:15:00",
         "num_seeds": 5,
         "variants": [
             {
                 "key": "p_high",
-                "values": [0.5, 0.67, 0.75, 0.8, 0.9]
+                "values": [0.9]
             },
             {
                 "key": "dataset_size",
@@ -71,17 +53,17 @@ EXPERIMENTS = {
             },
             {
                 "key": "p_relevant_context",
-                "values": [0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0]
+                "values": [0.0, 0.9, 1.0]
             },
         ]
     },
-    "synthetic-alpha": {
+    "synthetic-transformer-noisy_labels_0.1": {
         "run_time": "00:15:00",
         "num_seeds": 5,
         "variants": [
             {
                 "key": "p_high",
-                "values": [0.5, 0.67, 0.75, 0.8, 0.9]
+                "values": [0.9]
             },
             {
                 "key": "dataset_size",
@@ -89,7 +71,43 @@ EXPERIMENTS = {
             },
             {
                 "key": "p_relevant_context",
-                "values": [0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0]
+                "values": [0.0, 0.9, 1.0]
+            },
+        ]
+    },
+    "synthetic-transformer-noisy_labels_0.01": {
+        "run_time": "00:15:00",
+        "num_seeds": 5,
+        "variants": [
+            {
+                "key": "p_high",
+                "values": [0.9]
+            },
+            {
+                "key": "dataset_size",
+                "values": [2**6, 2**8, 2**10, 2**12, 2**14]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+        ]
+    },
+    "synthetic-transformer-large_num_low_freq": {
+        "run_time": "01:15:00",
+        "num_seeds": 5,
+        "variants": [
+            {
+                "key": "p_high",
+                "values": [0.9]
+            },
+            {
+                "key": "dataset_size",
+                "values": [2**8, 2**10, 2**12, 2**14]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
             },
         ]
     },

@@ -16,6 +16,7 @@ TODO:
 - Add mode for training IW transformer: This should set context to zero.
 """
 
+
 class Synthetic:
     def __init__(
         self,
@@ -31,11 +32,12 @@ class Synthetic:
         conditioning: str = "none",
         input_noise_std: float = 0.0,
         label_noise: float = 0.0,
+        num_relevant_contexts: int = None,
     ):
         assert 0.0 < p_high < 1.0
-        assert (
-            p_high / num_high_prob_classes >= (1 - p_high) / num_low_prob_classes
-        )
+        assert p_high / num_high_prob_classes >= (1 - p_high) / num_low_prob_classes
+        assert num_high_prob_classes + num_low_prob_classes <= dataset_size
+
         self.num_high_prob_classes = num_high_prob_classes
         self.num_low_prob_classes = num_low_prob_classes
         self.num_classes = num_high_prob_classes + num_low_prob_classes
@@ -49,12 +51,11 @@ class Synthetic:
         self.input_noise_std = input_noise_std
         self.label_noise = label_noise
         self.num_contexts = num_contexts
+        self.num_relevant_contexts = num_relevant_contexts
         self.conditioning = conditioning
         self.rng = np.random.RandomState(seed)
 
-        self.centers = self.rng.standard_normal(
-            size=(self.num_classes, self.num_dims)
-        )
+        self.centers = self.rng.standard_normal(size=(self.num_classes, self.num_dims))
         self.centers /= np.linalg.norm(self.centers, axis=-1, keepdims=True)
         self._generate_dataset()
 
@@ -86,49 +87,76 @@ class Synthetic:
             size=(self.dataset_size, self.num_contexts + 1),
             p=weights,
         )
+        self.targets[rng.permutation(self.dataset_size)[: self.num_classes], -1] = (
+            np.arange(self.num_classes)
+        )
         self.swap_labels = rng.uniform(size=self.targets.shape) < self.label_noise
 
         if self.conditioning == "high_prob":
             self.targets[..., -1] = rng.choice(
-                self.num_high_prob_classes,
-                size=(self.dataset_size,)
+                self.num_high_prob_classes, size=(self.dataset_size,)
             )
         elif self.conditioning == "low_prob":
-            self.targets[..., -1] = rng.choice(
-                self.num_low_prob_classes,
-                size=(self.dataset_size,)
-            ) + self.num_high_prob_classes
+            self.targets[..., -1] = (
+                rng.choice(self.num_low_prob_classes, size=(self.dataset_size,))
+                + self.num_high_prob_classes
+            )
 
         relevant_context_mask = rng.choice(
             2,
             size=(self.dataset_size,),
-            p=[1 - self.p_relevant_context, self.p_relevant_context]
+            p=[1 - self.p_relevant_context, self.p_relevant_context],
         )
 
-        context_from_query = np.sum(self.targets[:, :-1] == self.targets[:, [-1]], axis=-1)
+        context_from_query = np.sum(
+            self.targets[:, :-1] == self.targets[:, [-1]], axis=-1
+        )
 
         relevant_context_idxes = np.where(relevant_context_mask == 1)[0]
-        no_context_from_query_idxes = np.where(context_from_query[relevant_context_idxes] == 0)[0]
+        no_context_from_query_idxes = np.where(
+            context_from_query[relevant_context_idxes] == 0
+        )[0]
 
         while len(no_context_from_query_idxes) > 0:
-            self.targets[relevant_context_idxes[no_context_from_query_idxes], :-1] = rng.choice(
-                self.num_classes,
-                size=(len(no_context_from_query_idxes), self.num_contexts),
-                p=weights,
+            self.targets[relevant_context_idxes[no_context_from_query_idxes], :-1] = (
+                rng.choice(
+                    self.num_classes,
+                    size=(len(no_context_from_query_idxes), self.num_contexts),
+                    p=weights,
+                )
             )
-            context_from_query = np.sum(self.targets[:, :-1] == self.targets[:, [-1]], axis=-1)
-            no_context_from_query_idxes = np.where(context_from_query[relevant_context_idxes] == 0)[0]
+            context_from_query = np.sum(
+                self.targets[:, :-1] == self.targets[:, [-1]], axis=-1
+            )
+
+            if self.num_relevant_contexts is None:
+                no_context_from_query_idxes = np.where(
+                    context_from_query[relevant_context_idxes] == 0
+                )[0]
+            else:
+                no_context_from_query_idxes = np.where(
+                    context_from_query[relevant_context_idxes]
+                    != self.num_relevant_contexts
+                )[0]
 
         irrelevant_context_idxes = np.where(relevant_context_mask == 0)[0]
-        has_context_from_query_idxes = np.where(context_from_query[irrelevant_context_idxes] > 0)[0]
+        has_context_from_query_idxes = np.where(
+            context_from_query[irrelevant_context_idxes] > 0
+        )[0]
         while len(has_context_from_query_idxes) > 0:
-            self.targets[irrelevant_context_idxes[has_context_from_query_idxes], :-1] = rng.choice(
+            self.targets[
+                irrelevant_context_idxes[has_context_from_query_idxes], :-1
+            ] = rng.choice(
                 self.num_classes,
                 size=(len(has_context_from_query_idxes), self.num_contexts),
                 p=weights,
             )
-            context_from_query = np.sum(self.targets[:, :-1] == self.targets[:, [-1]], axis=-1)
-            has_context_from_query_idxes = np.where(context_from_query[irrelevant_context_idxes] > 0)[0]
+            context_from_query = np.sum(
+                self.targets[:, :-1] == self.targets[:, [-1]], axis=-1
+            )
+            has_context_from_query_idxes = np.where(
+                context_from_query[irrelevant_context_idxes] > 0
+            )[0]
 
         self.inputs = self.centers[self.targets.flatten()].reshape(
             (self.dataset_size, self.num_contexts + 1, -1)
@@ -140,24 +168,38 @@ class Synthetic:
     def get_sequences(
         self,
         flip_label: int = 0,
-        abstract_class: int = 0, # TODO: Fix this if we want binary
     ):
-        num_classes = 2 if abstract_class else self.num_classes
         while True:
             sample_i = self.rng.choice(self.dataset_size)
-            
-            example = self.inputs[sample_i]
 
-            swap_label = self.swap_labels[sample_i]
+            example = self.inputs[sample_i]
             label = self.targets[sample_i]
+
+            # OOD labels: Make sure OOD label is still within the same frequency class
+            if flip_label:
+                high_prob_class_idxes = np.where(label < self.num_high_prob_classes)[0]
+                low_prob_class_idxes = np.where(label >= self.num_high_prob_classes)[0]
+                label[high_prob_class_idxes] = (
+                    label[high_prob_class_idxes] + 1
+                ) % self.num_high_prob_classes
+                label[low_prob_class_idxes] = (
+                    label[low_prob_class_idxes] - self.num_high_prob_classes + 1
+                ) % self.num_low_prob_classes + 1
+
+            # Get label distribution
+            target = label[-1]
+            label_dist = np.zeros(self.num_classes)
+            label_dist[target] = 1 - self.label_noise
+            label_dist[(target + 1) % self.num_classes] = self.label_noise
+
+            # Label noise
+            swap_label = self.swap_labels[sample_i]
             label = np.where(swap_label, (label + 1) % self.num_classes, label)
 
-            if flip_label:
-                label = (label + 1) % self.num_classes
-                
-            label = np.eye(num_classes)[label]
+            label = np.eye(self.num_classes)[label]
 
             yield {
                 "example": example,
                 "label": label,
+                "label_dist": label_dist,
             }

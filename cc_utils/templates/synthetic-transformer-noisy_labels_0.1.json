@@ -6,13 +6,15 @@
         "checkpoint_interval": 10000
     },
     "model_config": {
-        "architecture": "SimpleICL",
+        "architecture": "InContextSupervisedTransformer",
         "model_kwargs": {
             "output_dim": 10,
-            "alpha_num_examples": 1,
-            "similarity": "l2",
-            "load_iw": "<TO_FILL>",
-            "load_ic": "<TO_FILL>"
+            "num_contexts": 1,
+            "num_blocks": 2,
+            "num_heads": 1,
+            "embed_dim": 64,
+            "widening_factor": 4,
+            "query_pred_only": true
         }
     },
     "optimizer_config": {
@@ -25,7 +27,7 @@
         },
         "opt_kwargs": {},
         "max_grad_norm": false,
-        "mask_names": ["iw_predictor", "ic_predictor"]
+        "mask_names": ["input_tokenizer"]
     },
     "dataset_name": "synthetic",
     "dataset_kwargs": {
@@ -38,7 +40,7 @@
         "train": true,
         "num_contexts": 1,
         "input_noise_std": 0.0,
-        "label_noise": 0.01
+        "label_noise": 0.1
     },
     "shuffle_buffer_size": 100,
     "num_workers": -1,
