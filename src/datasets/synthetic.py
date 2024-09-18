@@ -113,31 +113,60 @@ class Synthetic:
         )
 
         relevant_context_idxes = np.where(relevant_context_mask == 1)[0]
-        no_context_from_query_idxes = np.where(
-            context_from_query[relevant_context_idxes] == 0
-        )[0]
+        if self.num_relevant_contexts is None:
+            no_context_from_query_idxes = np.where(
+                context_from_query[relevant_context_idxes] == 0
+            )[0]
 
-        while len(no_context_from_query_idxes) > 0:
-            self.targets[relevant_context_idxes[no_context_from_query_idxes], :-1] = (
-                rng.choice(
+            while len(no_context_from_query_idxes) > 0:
+                self.targets[
+                    relevant_context_idxes[no_context_from_query_idxes], :-1
+                ] = rng.choice(
                     self.num_classes,
                     size=(len(no_context_from_query_idxes), self.num_contexts),
                     p=weights,
                 )
-            )
-            context_from_query = np.sum(
-                self.targets[:, :-1] == self.targets[:, [-1]], axis=-1
-            )
+                context_from_query = np.sum(
+                    self.targets[:, :-1] == self.targets[:, [-1]], axis=-1
+                )
 
-            if self.num_relevant_contexts is None:
                 no_context_from_query_idxes = np.where(
                     context_from_query[relevant_context_idxes] == 0
                 )[0]
-            else:
+        else:
+            self.targets[relevant_context_idxes, : self.num_relevant_contexts] = (
+                self.targets[relevant_context_idxes, -1][..., None]
+            )
+
+            if self.num_relevant_contexts != self.num_contexts:
                 no_context_from_query_idxes = np.where(
                     context_from_query[relevant_context_idxes]
                     != self.num_relevant_contexts
                 )[0]
+                while len(no_context_from_query_idxes) > 0:
+                    self.targets[
+                        relevant_context_idxes[no_context_from_query_idxes],
+                        self.num_relevant_contexts : -1,
+                    ] = rng.choice(
+                        self.num_classes,
+                        size=(
+                            len(no_context_from_query_idxes),
+                            self.num_relevant_contexts,
+                        ),
+                        p=weights,
+                    )
+                    context_from_query = np.sum(
+                        self.targets[:, self.num_relevant_contexts : -1]
+                        == self.targets[:, [-1]],
+                        axis=-1,
+                    )
+
+                    no_context_from_query_idxes = np.where(
+                        context_from_query[relevant_context_idxes] > 0
+                    )[0]
+            self.targets = np.random.default_rng(self.seed).permuted(
+                self.targets, axis=-1
+            )
 
         irrelevant_context_idxes = np.where(relevant_context_mask == 0)[0]
         has_context_from_query_idxes = np.where(

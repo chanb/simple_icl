@@ -1,6 +1,6 @@
 EXPERIMENTS = {
     "synthetic-transformer-context_len": {
-        "run_time": "00:15:00",
+        "run_time": "00:20:00",
         "num_seeds": 5,
         "variants": [
             {
@@ -14,6 +14,28 @@ EXPERIMENTS = {
             {
                 "key": "context_len",
                 "values": [2, 4, 8]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+        ]
+    },
+    "synthetic-transformer-num_relevant_contexts": {
+        "run_time": "00:20:00",
+        "num_seeds": 5,
+        "variants": [
+            {
+                "key": "p_high",
+                "values": [0.9]
+            },
+            {
+                "key": "dataset_size",
+                "values": [2**6, 2**8, 2**10, 2**12, 2**14]
+            },
+            {
+                "key": "num_relevant_contexts",
+                "values": [1, 2, 3, 4]
             },
             {
                 "key": "p_relevant_context",
@@ -94,7 +116,7 @@ EXPERIMENTS = {
         ]
     },
     "synthetic-transformer-large_num_low_freq": {
-        "run_time": "01:15:00",
+        "run_time": "00:20:00",
         "num_seeds": 5,
         "variants": [
             {

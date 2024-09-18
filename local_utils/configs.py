@@ -33,24 +33,7 @@ EXPERIMENTS = {
     #         },
     #     ]
     # },
-    "synthetic-transformer-no_noise": {
-        "num_seeds": 5,
-        "variants": [
-            {
-                "key": "p_high",
-                "values": [0.9]
-            },
-            {
-                "key": "dataset_size",
-                "values": [2**6, 2**8, 2**10, 2**12, 2**14]
-            },
-            {
-                "key": "p_relevant_context",
-                "values": [0.0, 0.9, 1.0]
-            },
-        ]
-    },
-    # "synthetic-transformer-context_len": {
+    # "synthetic-transformer-no_noise": {
     #     "num_seeds": 5,
     #     "variants": [
     #         {
@@ -62,15 +45,32 @@ EXPERIMENTS = {
     #             "values": [2**6, 2**8, 2**10, 2**12, 2**14]
     #         },
     #         {
-    #             "key": "num_contexts",
-    #             "values": [2, 4, 8]
-    #         },
-    #         {
     #             "key": "p_relevant_context",
     #             "values": [0.0, 0.9, 1.0]
     #         },
     #     ]
     # },
+    "synthetic-transformer-context_len": {
+        "num_seeds": 5,
+        "variants": [
+            {
+                "key": "p_high",
+                "values": [0.9]
+            },
+            {
+                "key": "dataset_size",
+                "values": [2**6, 2**8, 2**10, 2**12, 2**14]
+            },
+            {
+                "key": "num_contexts",
+                "values": [2, 4, 8]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+        ]
+    },
     # "synthetic-iw_predictor": {
     #     "num_seeds": 5,
     #     "variants": [
