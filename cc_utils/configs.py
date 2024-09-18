@@ -136,6 +136,6 @@ EXPERIMENTS = {
 }
 
 EVALUATION = {
-    "num_eval_samples": 1000,
+    "num_eval_samples": 3000,
     "batch_size": 100,
 }
