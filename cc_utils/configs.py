@@ -1,3 +1,7 @@
+# TODO: Omniglot
+# TODO: Simple ICL model
+# TODO: More thorough experiments
+
 # Preliminarty experiments on synthetic dataset
 EXPERIMENTS = {
     "synthetic-transformer-context_len": {
