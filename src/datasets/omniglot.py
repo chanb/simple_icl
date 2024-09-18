@@ -23,7 +23,6 @@ import os
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-from types import SimpleNamespace
 
 IMAGE_SIZE = 105
 N_CHARACTER_CLASSES = 1623

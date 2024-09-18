@@ -1,0 +1,8 @@
+HOME_DIR = "/Users/chanb/research/ualberta/icl"
+CONFIG_DIR = f"{HOME_DIR}/scratch/configs"
+EVAL_DIR = f"{HOME_DIR}/scratch/evaluation_results"
+LOG_DIR = f"{HOME_DIR}/scratch/results"
+PLOT_DIR = f"{HOME_DIR}/scratch/plots"
+RUN_REPORT_DIR = f"{HOME_DIR}/scratch/run_reports"
+DATASET_DIR = f"{HOME_DIR}/scratch/datasets"
+REPO_PATH = f"{HOME_DIR}/simple_icl"

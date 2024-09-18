@@ -1,56 +1,142 @@
+# Preliminarty experiments on synthetic dataset
 EXPERIMENTS = {
-    # "simple_icl-transformer": {
-    #     "run_time": "00:55:00",
-    #     "num_seeds": 10,
-    #     "variants": [
-    #         {
-    #             "key": "high_prob",
-    #             "values": [0.5, 0.67, 0.75, 0.8, 0.9, 0.99]
-    #         }
-    #     ]
-    # },
-    "simple_icl-transformer-non_linear": {
-        "run_time": "01:15:00",
-        "num_seeds": 10,
+    "synthetic-transformer-context_len": {
+        "run_time": "00:45:00",
+        "num_seeds": 5,
         "variants": [
-            {"key": "high_prob", "values": [0.5, 0.67, 0.75, 0.8, 0.9, 0.99]},
             {
-                "key": "num_high_prob_classes",
-                "values": [100],
+                "key": "p_high",
+                "values": [0.9]
             },
             {
-                "key": "num_low_prob_classes",
-                "values": [100],
+                "key": "dataset_size",
+                "values": [2**6, 2**8, 2**10, 2**12, 2**14]
             },
-        ],
+            {
+                "key": "num_contexts",
+                "values": [2, 4, 8]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+        ]
     },
-    # "simple_icl-learned_g": {
-    #     "run_time": "00:45:00",
-    #     "num_seeds": 10,
-    #     "variants": [
-    #         {
-    #             "key": "high_prob",
-    #             "values": [0.5, 0.67, 0.75, 0.8, 0.9, 0.99]
-    #         }
-    #     ]
-    # },
-    "simple_icl-fixed_g": {
-        "run_time": "01:15:00",
-        "num_seeds": 10,
+    "synthetic-transformer-num_relevant_contexts": {
+        "run_time": "00:45:00",
+        "num_seeds": 5,
         "variants": [
             {
-                "key": ["high_prob", "high_freq_prob", "low_freq_prob"],
-                "values": [
-                    [0.5, 0.67, 0.75, 0.8, 0.9, 0.99],
-                    [0.5, 0.67, 0.75, 0.8, 0.9, 0.99],
-                    [1 - 0.5, 1 - 0.67, 1 - 0.75, 1 - 0.8, 1 - 0.9, 1 - 0.99],
-                ],
-            }
-        ],
+                "key": "p_high",
+                "values": [0.9]
+            },
+            {
+                "key": "dataset_size",
+                "values": [2**6, 2**8, 2**10, 2**12, 2**14]
+            },
+            {
+                "key": "num_relevant_contexts",
+                "values": [1, 2, 3, 4]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+        ]
+    },
+    "synthetic-transformer-no_noise": {
+        "run_time": "00:30:00",
+        "num_seeds": 5,
+        "variants": [
+            {
+                "key": "p_high",
+                "values": [0.9]
+            },
+            {
+                "key": "dataset_size",
+                "values": [2**6, 2**8, 2**10, 2**12, 2**14]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+        ]
+    },
+    "synthetic-transformer-noisy_inputs_0.2": {
+        "run_time": "00:30:00",
+        "num_seeds": 5,
+        "variants": [
+            {
+                "key": "p_high",
+                "values": [0.9]
+            },
+            {
+                "key": "dataset_size",
+                "values": [2**6, 2**8, 2**10, 2**12, 2**14]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+        ]
+    },
+    "synthetic-transformer-noisy_labels_0.1": {
+        "run_time": "00:30:00",
+        "num_seeds": 5,
+        "variants": [
+            {
+                "key": "p_high",
+                "values": [0.9]
+            },
+            {
+                "key": "dataset_size",
+                "values": [2**6, 2**8, 2**10, 2**12, 2**14]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+        ]
+    },
+    "synthetic-transformer-noisy_labels_0.01": {
+        "run_time": "00:30:00",
+        "num_seeds": 5,
+        "variants": [
+            {
+                "key": "p_high",
+                "values": [0.9]
+            },
+            {
+                "key": "dataset_size",
+                "values": [2**6, 2**8, 2**10, 2**12, 2**14]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+        ]
+    },
+    "synthetic-transformer-large_num_low_freq": {
+        "run_time": "00:55:00",
+        "num_seeds": 5,
+        "variants": [
+            {
+                "key": "p_high",
+                "values": [0.9]
+            },
+            {
+                "key": "dataset_size",
+                "values": [2**8, 2**10, 2**12, 2**14]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+        ]
     },
 }
 
 EVALUATION = {
-    "num_eval_samples": 1000,
+    "num_eval_samples": 3000,
     "batch_size": 100,
 }

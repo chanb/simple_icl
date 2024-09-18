@@ -3,15 +3,14 @@
         "save_path": "<TO_FILL>",
         "experiment_name": "<TO_FILL>",
         "log_interval": 50,
-        "checkpoint_interval": 500
+        "checkpoint_interval": 10000
     },
     "model_config": {
-        "architecture": "SimpleICLModel",
+        "architecture": "SimpleICL",
         "model_kwargs": {
-            "high_freq_prob": 1.0,
-            "low_freq_prob": 1.0,
-            "similarity": "l2",
-            "alpha_num_examples": 8
+            "output_dim": 10,
+            "alpha_num_examples": 1,
+            "similarity": "l2"
         }
     },
     "optimizer_config": {
@@ -26,27 +25,26 @@
         "max_grad_norm": false,
         "mask_names": []
     },
-    "dataset_name": "streamblock",
+    "dataset_name": "synthetic",
     "dataset_kwargs": {
-        "num_high_prob_classes": 1000,
-        "num_low_prob_classes": 1000,
-        "high_prob": 0.5,
+        "dataset_size": "<TO_FILL>",
+        "num_high_prob_classes": 5,
+        "num_low_prob_classes": 5,
+        "p_high": "<TO_FILL>",
+        "p_relevant_context": "<TO_FILL>",
         "num_dims": 64,
-        "mode": "default",
-        "num_examples": 8,
+        "train": true,
+        "num_contexts": 1,
         "input_noise_std": 0.0,
-        "abstract_class": 1,
-        "margin": 0.99,
-        "linearly_separable": 1,
-        "scramble_context": 1
+        "label_noise": 0.01
     },
     "shuffle_buffer_size": 100,
     "num_workers": -1,
     "batch_size": 32,
-    "num_epochs": 100000,
+    "num_epochs": 50000,
     "num_updates_per_epoch": 1,
     "seeds": {
-        "learner_seed": "<TO_FILL>",
-        "data_seed": "<TO_FILL>"
+        "learner_seed": 46,
+        "data_seed": 46
     }
 }

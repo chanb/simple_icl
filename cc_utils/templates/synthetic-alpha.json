@@ -1,16 +1,18 @@
 {
     "logging_config": {
-        "save_path": "./results/bv_tradeoff",
-        "experiment_name": "fixed_g_0.8-alpha_context",
+        "save_path": "<TO_FILL>",
+        "experiment_name": "<TO_FILL>",
         "log_interval": 50,
-        "checkpoint_interval": 500
+        "checkpoint_interval": 10000
     },
     "model_config": {
-        "architecture": "SimpleICLModel",
+        "architecture": "SimpleICL",
         "model_kwargs": {
-            "ground_truth_prob": 0.8,
+            "output_dim": 10,
+            "alpha_num_examples": 1,
             "similarity": "l2",
-            "alpha_num_examples": 8
+            "load_iw": "<TO_FILL>",
+            "load_ic": "<TO_FILL>"
         }
     },
     "optimizer_config": {
@@ -18,25 +20,25 @@
         "lr": {
             "scheduler": "constant_schedule",
             "scheduler_kwargs": {
-                "value": 1e-3
+                "value": 3e-4
             }
         },
         "opt_kwargs": {},
         "max_grad_norm": false,
-        "mask_names": []
+        "mask_names": ["iw_predictor", "ic_predictor"]
     },
-    "dataset_name": "streamblock",
+    "dataset_name": "synthetic",
     "dataset_kwargs": {
-        "num_high_prob_classes": 1000,
-        "num_low_prob_classes": 1000,
-        "high_prob": 0.8,
+        "dataset_size": "<TO_FILL>",
+        "num_high_prob_classes": 5,
+        "num_low_prob_classes": 5,
+        "p_high": "<TO_FILL>",
+        "p_relevant_context": "<TO_FILL>",
         "num_dims": 64,
-        "mode": "default",
-        "num_examples": 8,
+        "train": true,
+        "num_contexts": 1,
         "input_noise_std": 0.0,
-        "abstract_class": 1,
-        "margin": 0.99,
-        "linearly_separable": 1
+        "label_noise": 0.01
     },
     "shuffle_buffer_size": 100,
     "num_workers": -1,

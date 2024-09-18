@@ -126,6 +126,37 @@ def get_streamblock_eval_datasets(
     }, configs
 
 
+def get_synthetic_eval_datasets(
+    config_dict: Dict[str, Any],
+    test_data_seed: int,
+    context_len: int,
+    num_eval_samples: int,
+    skip_test: bool = False,
+):
+    configs = dict()
+
+    for flip_label in [1, 0]:
+        for relevant_context in ["default", "relevant_context", "irrelevant_context"]:
+            for conditioning in ["none", "high_prob", "low_prob"]:
+                eval_config_dict = copy.deepcopy(config_dict)
+
+                eval_config_dict["dataset_kwargs"]["dataset_size"] = num_eval_samples * 5
+                eval_config_dict["dataset_kwargs"]["train"] = False
+                if relevant_context == "relevant_context":
+                    eval_config_dict["dataset_kwargs"]["p_relevant_context"] = 1.0
+                elif relevant_context == "irrelevant_context":
+                    eval_config_dict["dataset_kwargs"]["p_relevant_context"] = 0.0
+                eval_config_dict["dataset_kwargs"]["conditioning"] = conditioning
+                eval_config_dict["dataset_kwargs"]["flip_label"] = flip_label
+
+                eval_config = parse_dict(eval_config_dict)
+                configs["eval-{}-{}{}".format(relevant_context, conditioning, "-flip_label" if flip_label else "")] = eval_config
+
+    return {
+        eval_name: get_data_loader(config) for eval_name, config in configs.items()
+    }, configs
+
+
 def main(args: SimpleNamespace):
     learner_path = args.learner_path
     save_path = args.save_path
@@ -147,6 +178,8 @@ def main(args: SimpleNamespace):
         context_len = config.model_config.model_kwargs.num_contexts
     elif hasattr(config.dataset_kwargs, "num_examples"):
         context_len = config.dataset_kwargs.num_examples
+    elif hasattr(config.dataset_kwargs, "num_contexts"):
+        context_len = config.dataset_kwargs.num_contexts
     else:
         raise NotImplementedError
 
@@ -164,8 +197,13 @@ def main(args: SimpleNamespace):
             test_data_seed,
             context_len,
         )
-    # datasets = dict()
-    # dataset_configs = dict()
+    elif config.dataset_name == "synthetic":
+        datasets, dataset_configs = get_synthetic_eval_datasets(
+            config_dict,
+            test_data_seed,
+            context_len,
+            num_eval_samples,
+        )
 
     train_data_loader, train_dataset = get_data_loader(
         config,
