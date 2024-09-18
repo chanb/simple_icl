@@ -1,3 +1,4 @@
+# Preliminarty experiments on synthetic dataset
 EXPERIMENTS = {
     "synthetic-transformer-context_len": {
         "run_time": "00:20:00",
