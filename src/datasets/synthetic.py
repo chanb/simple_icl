@@ -133,7 +133,7 @@ class Synthetic:
                 self.targets[relevant_context_idxes, -1][..., None]
             )
 
-            if self.num_relevant_contexts != self.num_contexts:
+            if self.num_relevant_contexts <= self.num_contexts:
                 no_context_from_query_idxes = np.where(
                     context_from_query[relevant_context_idxes]
                     != self.num_relevant_contexts
