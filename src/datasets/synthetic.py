@@ -32,6 +32,7 @@ class Synthetic:
         assert 0.0 < p_high < 1.0
         assert p_high / num_high_prob_classes >= (1 - p_high) / num_low_prob_classes
         assert num_high_prob_classes + num_low_prob_classes <= dataset_size
+        assert num_relevant_contexts is None or num_relevant_contexts > 0
 
         self.num_high_prob_classes = num_high_prob_classes
         self.num_low_prob_classes = num_low_prob_classes
@@ -133,7 +134,7 @@ class Synthetic:
                 self.targets[relevant_context_idxes, -1][..., None]
             )
 
-            if self.num_relevant_contexts <= self.num_contexts:
+            if self.num_relevant_contexts != self.num_contexts:
                 no_context_from_query_idxes = np.where(
                     context_from_query[relevant_context_idxes]
                     != self.num_relevant_contexts
@@ -146,7 +147,7 @@ class Synthetic:
                         self.num_classes,
                         size=(
                             len(no_context_from_query_idxes),
-                            self.num_relevant_contexts,
+                            self.num_contexts - self.num_relevant_contexts,
                         ),
                         p=weights,
                     )
