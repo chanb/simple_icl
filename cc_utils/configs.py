@@ -1,7 +1,7 @@
 # Preliminarty experiments on synthetic dataset
 EXPERIMENTS = {
     "synthetic-transformer-context_len": {
-        "run_time": "00:20:00",
+        "run_time": "00:45:00",
         "num_seeds": 5,
         "variants": [
             {
@@ -23,7 +23,7 @@ EXPERIMENTS = {
         ]
     },
     "synthetic-transformer-num_relevant_contexts": {
-        "run_time": "00:20:00",
+        "run_time": "00:45:00",
         "num_seeds": 5,
         "variants": [
             {
@@ -45,7 +45,7 @@ EXPERIMENTS = {
         ]
     },
     "synthetic-transformer-no_noise": {
-        "run_time": "00:15:00",
+        "run_time": "00:30:00",
         "num_seeds": 5,
         "variants": [
             {
@@ -63,7 +63,7 @@ EXPERIMENTS = {
         ]
     },
     "synthetic-transformer-noisy_inputs_0.2": {
-        "run_time": "00:15:00",
+        "run_time": "00:30:00",
         "num_seeds": 5,
         "variants": [
             {
@@ -81,7 +81,7 @@ EXPERIMENTS = {
         ]
     },
     "synthetic-transformer-noisy_labels_0.1": {
-        "run_time": "00:15:00",
+        "run_time": "00:30:00",
         "num_seeds": 5,
         "variants": [
             {
@@ -99,7 +99,7 @@ EXPERIMENTS = {
         ]
     },
     "synthetic-transformer-noisy_labels_0.01": {
-        "run_time": "00:15:00",
+        "run_time": "00:30:00",
         "num_seeds": 5,
         "variants": [
             {
@@ -117,7 +117,7 @@ EXPERIMENTS = {
         ]
     },
     "synthetic-transformer-large_num_low_freq": {
-        "run_time": "00:20:00",
+        "run_time": "00:55:00",
         "num_seeds": 5,
         "variants": [
             {
