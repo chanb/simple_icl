@@ -76,7 +76,7 @@ EXPERIMENTS = {
     },
     # Section 5.1.3
     "synthetic-transformer-num_contexts": {
-        "run_time": "00:30:00",
+        "run_time": "01:00:00",
         "num_seeds": 5,
         "variants": [
             {
