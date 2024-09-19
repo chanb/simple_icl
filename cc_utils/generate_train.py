@@ -89,6 +89,13 @@ for exp_name, exp_config in EXPERIMENTS.items():
             for variant_key, variant_value in zip(variant_keys, variant_config):
                 set_dict_value(config_dict, variant_key, variant_value)
 
+                if variant_key in ["num_low_prob_classes", "num_high_prob_classes"]:
+                    set_dict_value(
+                        config_dict,
+                        "output_dim",
+                        config_dict["dataset_kwargs"]["num_high_prob_classes"] + config_dict["dataset_kwargs"]["num_low_prob_classes"]
+                    )
+
             json.dump(
                 config_dict,
                 open(curr_config_path, "w"),

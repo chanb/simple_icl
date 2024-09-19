@@ -8,7 +8,7 @@
     "model_config": {
         "architecture": "InContextSupervisedTransformer",
         "model_kwargs": {
-            "output_dim": 100,
+            "output_dim": 10,
             "num_contexts": 1,
             "num_blocks": 2,
             "num_heads": 1,
@@ -33,8 +33,8 @@
     "dataset_kwargs": {
         "dataset_size": "<TO_FILL>",
         "num_high_prob_classes": 5,
-        "num_low_prob_classes": 95,
-        "p_high": "<TO_FILL>",
+        "num_low_prob_classes": 5,
+        "p_high": 0.9,
         "p_relevant_context": "<TO_FILL>",
         "num_dims": 64,
         "train": true,
