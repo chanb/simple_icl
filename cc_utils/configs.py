@@ -113,7 +113,7 @@ EXPERIMENTS = {
     },
     # Section 5.1.4
     "synthetic-transformer-num_low_freq": {
-        "run_time": "00:55:00",
+        "run_time": "05:00:00",
         "num_seeds": 5,
         "variants": [
             {

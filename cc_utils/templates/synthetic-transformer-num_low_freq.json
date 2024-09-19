@@ -3,7 +3,7 @@
         "save_path": "<TO_FILL>",
         "experiment_name": "<TO_FILL>",
         "log_interval": 50,
-        "checkpoint_interval": 500
+        "checkpoint_interval": 100
     },
     "model_config": {
         "architecture": "InContextSupervisedTransformer",
@@ -45,7 +45,7 @@
     "shuffle_buffer_size": 100,
     "num_workers": -1,
     "batch_size": 32,
-    "num_epochs": 50000,
+    "num_epochs": 500000,
     "num_updates_per_epoch": 1,
     "seeds": {
         "learner_seed": 46,
