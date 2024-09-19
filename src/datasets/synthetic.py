@@ -209,7 +209,7 @@ class Synthetic:
                 ) % self.num_high_prob_classes
                 label[low_prob_class_idxes] = (
                     label[low_prob_class_idxes] - self.num_high_prob_classes + 1
-                ) % self.num_low_prob_classes + 1
+                ) % self.num_low_prob_classes + self.num_high_prob_classes
 
             # Get label distribution
             target = label[-1]
