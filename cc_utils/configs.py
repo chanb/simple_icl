@@ -29,7 +29,7 @@ EXPERIMENTS = {
         "variants": [
             {
                 "key": "p_high",
-                "values": [0.1, 0.5, 0.9, 0.99]
+                "values": [0.5, 0.9, 0.99]
             },
             {
                 "key": "dataset_size",
