@@ -56,7 +56,7 @@ EXPERIMENTS = {
         ]
     },
     # Section 5.1.2
-    "synthetic-transformer-noisy_inputs": {
+    "synthetic-transformer-noisy_labels": {
         "run_time": "00:30:00",
         "num_seeds": 5,
         "variants": [
