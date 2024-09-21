@@ -160,6 +160,7 @@ def get_synthetic_eval_datasets(
 def main(args: SimpleNamespace):
     learner_path = args.learner_path
     save_path = args.save_path
+    num_pretrain_samples = args.num_pretrain_samples
     batch_size = args.batch_size
     num_eval_samples = args.num_eval_samples
     test_data_seed = args.test_data_seed
@@ -220,7 +221,7 @@ def main(args: SimpleNamespace):
         data_loader, dataset = datasets[eval_name]
         data_iter = iter(data_loader)
         prefetched_data[eval_name] = dict(
-            samples=[next(data_iter) for _ in range(num_eval_samples // batch_size)],
+            samples=[next(data_iter) for _ in range((num_pretrain_samples if eval_name == "pretraining" else num_eval_samples) // batch_size)],
             dataset_output_dim=dataset.output_space.n,
         )
 
@@ -274,10 +275,16 @@ if __name__ == "__main__":
         help="The directory to save to",
     )
     parser.add_argument(
+        "--num_pretrain_samples",
+        type=int,
+        default=10000,
+        help="The number of pretraining samples",
+    )
+    parser.add_argument(
         "--num_eval_samples",
         type=int,
         default=1000,
-        help="The number of evaluation tasks",
+        help="The number of evaluation samples",
     )
     parser.add_argument("--batch_size", type=int, default=100, help="The batch size")
     parser.add_argument(
