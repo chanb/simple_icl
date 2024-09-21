@@ -11,7 +11,8 @@ EXPERIMENTS = {
         "variants": [
             {
                 "key": "dataset_size",
-                "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18]
+                # "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18]
+                "values": [2**20]
             },
             {
                 "key": "p_relevant_context",
@@ -33,7 +34,7 @@ EXPERIMENTS = {
             },
             {
                 "key": "dataset_size",
-                "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**20]
+                "values": [2**18, 2**20]
             },
             {
                 "key": "p_relevant_context",
@@ -47,7 +48,7 @@ EXPERIMENTS = {
         "variants": [
             {
                 "key": "dataset_size",
-                "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**20]
+                "values": [2**18, 2**20]
             },
             {
                 "key": "p_relevant_context",
@@ -62,7 +63,7 @@ EXPERIMENTS = {
         "variants": [
             {
                 "key": "dataset_size",
-                "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**20]
+                "values": [2**18, 2**20]
             },
             {
                 "key": "p_relevant_context",
@@ -75,24 +76,24 @@ EXPERIMENTS = {
         ]
     },
     # Section 5.1.4
-    "synthetic-transformer-num_low_freq": {
-        "run_time": "10:00:00",
-        "num_seeds": 5,
-        "variants": [
-            {
-                "key": "dataset_size",
-                "values": [2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
-            },
-            {
-                "key": "p_relevant_context",
-                "values": [0.0, 0.9, 1.0]
-            },
-            {
-                "key": "num_low_prob_classes",
-                "values": [5, 45, 95, 495]
-            }
-        ]
-    },
+    # "synthetic-transformer-num_low_freq": {
+    #     "run_time": "10:00:00",
+    #     "num_seeds": 5,
+    #     "variants": [
+    #         {
+    #             "key": "dataset_size",
+    #             "values": [2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+    #         },
+    #         {
+    #             "key": "p_relevant_context",
+    #             "values": [0.0, 0.9, 1.0]
+    #         },
+    #         {
+    #             "key": "num_low_prob_classes",
+    #             "values": [5, 45, 95, 495]
+    #         }
+    #     ]
+    # },
 }
 
 # Section 5
