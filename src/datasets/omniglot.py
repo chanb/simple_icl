@@ -81,7 +81,7 @@ class OmniglotDatasetForSampling:
         else:
             data_dir = None
             if "SLURM_TMPDIR" in os.environ:
-                data_dir = os.path.join(os.environ(data_dir), "tensorflow_datasets")
+                data_dir = os.path.join(os.environ[data_dir], "tensorflow_datasets")
             ds = tfds.load(
                 "omniglot",
                 split=split,
