@@ -135,84 +135,48 @@ def get_omniglot_seq_generator(
     dataset_kwargs: SimpleNamespace,
     seed: int,
 ):
-    task_name = dataset_kwargs.task_name
-    task_config = dataset_kwargs.task_config
-
-    data_generator_factory = omniglot.SeqGenerator(
-        omniglot.OmniglotDatasetForSampling(
-            omniglot_split="all",
-            exemplars=task_config.exemplars,
-            augment_images=False,
-        ),
-        n_rare_classes=1603,  # 1623 - 20
-        n_common_classes=10,
-        n_holdout_classes=10,
-        zipf_exponent=0.0,
-        use_zipf_for_common_rare=False,
-        noise_scale=task_config.noise_scale,
-        preserve_ordering_every_n=None,
-        random_seed=seed,
+    task = omniglot.Omniglot(
+        dataset_kwargs.dataset_size,
+        dataset_kwargs.num_contexts,
+        dataset_kwargs.num_high_prob_classes,
+        dataset_kwargs.num_low_prob_classes,
+        dataset_kwargs.p_high,
+        dataset_kwargs.p_relevant_context,
+        seed,
+        dataset_kwargs.train,
+        getattr(dataset_kwargs, "conditioning", "none"),
+        getattr(dataset_kwargs, "input_noise_std", 0.0),
+        getattr(dataset_kwargs, "label_noise", 0.0),
+        getattr(dataset_kwargs, "num_relevant_contexts", None),
+        getattr(dataset_kwargs, "exemplar", "single"),
     )
 
-    if task_name == "bursty":
-        seq_generator = data_generator_factory.get_bursty_seq
-
-        seq_config = (
-            dataset_kwargs.sequence_length,
-            dataset_kwargs.bursty_shots,
-            dataset_kwargs.ways,
-            dataset_kwargs.p_bursty,
-            0.0,
-            1.0,
-            "zipfian",
-            "ordered",
-            "ordered",
-            False,
-            False,
-        )
-    elif task_name == "fewshot_holdout":
-        seq_generator = data_generator_factory.get_fewshot_seq
-        seq_config = (
-            "holdout",
-            dataset_kwargs.fs_shots,
-            dataset_kwargs.ways,
-            "unfixed",
-            False,
-            False,
-        )
-    elif task_name == "no_support":
-        seq_generator = data_generator_factory.get_no_support_seq
-        all_unique = False
-        seq_config = (
-            "zipfian",
-            dataset_kwargs.sequence_length,
-            all_unique,
-            "ordered",
-            False,
-        )
-    else:
-        raise NotImplementedError
-
-    example_shape = (dataset_kwargs.sequence_length, 105, 105, 1)
-    example_dtype = tf.dtypes.float32
+    num_classes = (
+        dataset_kwargs.num_low_prob_classes + dataset_kwargs.num_high_prob_classes
+    )
 
     dataset = tf.data.Dataset.from_generator(
-        seq_generator,
-        args=seq_config,
+        task.get_sequences,
+        args=(getattr(dataset_kwargs, "flip_label", 0),),
         output_signature={
-            "example": tf.TensorSpec(shape=example_shape, dtype=example_dtype),
-            "label": tf.TensorSpec(
-                shape=(dataset_kwargs.sequence_length,), dtype=tf.dtypes.int32
+            "example": tf.TensorSpec(
+                shape=(dataset_kwargs.num_contexts + 1, omniglot.IMAGE_SIZE, omniglot.IMAGE_SIZE, 1),
+                dtype=tf.dtypes.float32,
             ),
-            "is_rare": tf.TensorSpec(
-                shape=(dataset_kwargs.sequence_length,), dtype=tf.dtypes.int32
+            "label": tf.TensorSpec(
+                shape=(dataset_kwargs.num_contexts + 1, num_classes),
+                dtype=tf.dtypes.int32,
+            ),
+            "label_dist": tf.TensorSpec(
+                shape=(num_classes,),
+                dtype=tf.dtypes.float32,
             ),
         },
     )
     return TFDataset(
         dataset,
-        spaces.Box(low=0, high=255, shape=(105, 105, 1), dtype=int),
-        spaces.Discrete(omniglot.N_CHARACTER_CLASSES),
+        task.input_space,
+        task.output_space,
     )
 
 

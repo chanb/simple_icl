@@ -9,7 +9,7 @@
         "architecture": "InContextSupervisedTransformer",
         "model_kwargs": {
             "output_dim": 1623,
-            "num_contexts": 8,
+            "num_contexts": 1,
             "num_blocks": 2,
             "num_heads": 1,
             "embed_dim": 64,
@@ -34,18 +34,19 @@
     },
     "dataset_name": "omniglot",
     "dataset_kwargs": {
-        "task_name": "bursty",
-        "task_config": {
-            "exemplars": "single",
-            "noise_scale": 0.1
-        },
-        "sequence_length": 9,
-        "p_bursty": 0.9,
-        "bursty_shots": 3,
-        "ways": 2
+        "dataset_size": 10000,
+        "num_high_prob_classes": 20,
+        "num_low_prob_classes": 1603,
+        "p_high": 0.9,
+        "p_relevant_context": 0.9,
+        "train": true,
+        "num_contexts": 1,
+        "input_noise_std": 0.0,
+        "label_noise": 0.0,
+        "exemplar": "single"
     },
     "shuffle_buffer_size": 100,
-    "num_workers": -1,
+    "num_workers": 0,
     "batch_size": 32,
     "num_epochs": 500000,
     "num_updates_per_epoch": 1,
