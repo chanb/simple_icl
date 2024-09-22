@@ -65,8 +65,6 @@ class Omniglot:
         download = True
         if "SLURM_TMPDIR" in os.environ:
             data_dir = os.path.join(os.environ["SLURM_TMPDIR"], "torch_datasets")
-            os.makedirs(os.path.join(os.environ["SLURM_TMPDIR"], "torch_datasets", "omniglot-py", "images_evaluation"), exist_ok=True)
-            os.makedirs(os.path.join(os.environ["SLURM_TMPDIR"], "torch_datasets", "omniglot-py", "images_background"), exist_ok=True)
             download = False
 
         self.train_dataset = torch_datasets.Omniglot(

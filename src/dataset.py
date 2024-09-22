@@ -310,16 +310,6 @@ def get_data_loader(config: SimpleNamespace) -> Any:
             getattr(dataset_kwargs, "exemplar", "single"),
         )
 
-        # return (
-        #     DataLoader(
-        #         dataset,
-        #         batch_size=batch_size,
-        #         shuffle=shuffle,
-        #         drop_last=drop_last,
-        #         num_workers=num_workers,
-        #     ),
-        #     dataset,
-        # )
         loader = DataLoader(
             dataset,
             batch_size=batch_size,
@@ -346,7 +336,6 @@ def get_data_loader(config: SimpleNamespace) -> Any:
             dataset.output_space.n,
         )
         ds = ds.repeat().shuffle(buffer_size=shuffle_buffer_size)
-        # return tfds.as_numpy(ds), dataset
         loader = tfds.as_numpy(ds)
 
     loader = get_iter(loader)
