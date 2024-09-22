@@ -24,7 +24,7 @@ pip install torch torchvision --no-index
 pip install tensorflow --no-index
 pip install tensorflow_datasets --no-index
 pip install scikit-learn --no-index
-pip install prefetch_generator
+pip install prefetch_generator --no-index
 ```
 
 ### GPU
@@ -45,7 +45,7 @@ pip install torch torchvision --no-index
 pip install tensorflow --no-index
 pip install tensorflow_datasets --no-index
 pip install scikit-learn --no-index
-pip install prefetch_generator
+pip install prefetch_generator --no-index
 ```
 
 ## Setup JupyterHub
