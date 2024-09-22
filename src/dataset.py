@@ -266,21 +266,53 @@ def get_data_loader(config: SimpleNamespace) -> Any:
     dataset_name = config.dataset_name
     dataset_kwargs = config.dataset_kwargs
 
-    if dataset_name == "streamblock":
-        seq_generator = get_streamblock_seq_generator
-    elif dataset_name == "omniglot":
-        seq_generator = get_omniglot_seq_generator
-    elif dataset_name == "synthetic":
-        seq_generator = get_synthetic_seq_generator
+    if dataset_name == "omniglot":
+        from torch.utils.data import DataLoader
+        batch_size = config.batch_size
+        shuffle = True
+        drop_last = True
+        num_workers = getattr(config, "num_workers", 0)
+        dataset = omniglot.Omniglot(
+            dataset_kwargs.dataset_size,
+            dataset_kwargs.num_contexts,
+            dataset_kwargs.num_high_prob_classes,
+            dataset_kwargs.num_low_prob_classes,
+            dataset_kwargs.p_high,
+            dataset_kwargs.p_relevant_context,
+            config.seeds.data_seed,
+            dataset_kwargs.train,
+            getattr(dataset_kwargs, "conditioning", "none"),
+            getattr(dataset_kwargs, "input_noise_std", 0.0),
+            getattr(dataset_kwargs, "label_noise", 0.0),
+            getattr(dataset_kwargs, "num_relevant_contexts", None),
+            getattr(dataset_kwargs, "exemplar", "single"),
+        )
 
-    dataset = seq_generator(dataset_kwargs, config.seeds.data_seed)
-    ds_seqs = dataset.dataset
+        print(num_workers)
+        return DataLoader(
+            dataset,
+            batch_size=batch_size,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            num_workers=num_workers,
+        ), dataset
 
-    shuffle_buffer_size = config.shuffle_buffer_size
-    ds = ds_seqs.batch(config.batch_size).prefetch(config.num_workers)
-    ds = prepare_seqs_for_icl(
-        ds,
-        dataset.output_space.n,
-    )
-    ds = ds.repeat().shuffle(buffer_size=shuffle_buffer_size)
-    return tfds.as_numpy(ds), dataset
+    else:
+        if dataset_name == "streamblock":
+            seq_generator = get_streamblock_seq_generator
+        elif dataset_name == "omniglot":
+            seq_generator = get_omniglot_seq_generator
+        elif dataset_name == "synthetic":
+            seq_generator = get_synthetic_seq_generator
+
+        dataset = seq_generator(dataset_kwargs, config.seeds.data_seed)
+        ds_seqs = dataset.dataset
+
+        shuffle_buffer_size = config.shuffle_buffer_size
+        ds = ds_seqs.batch(config.batch_size).prefetch(config.num_workers)
+        ds = prepare_seqs_for_icl(
+            ds,
+            dataset.output_space.n,
+        )
+        ds = ds.repeat().shuffle(buffer_size=shuffle_buffer_size)
+        return tfds.as_numpy(ds), dataset
