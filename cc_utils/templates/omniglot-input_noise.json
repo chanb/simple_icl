@@ -1,0 +1,58 @@
+{
+    "logging_config": {
+        "save_path": "<TO_FILL>",
+        "experiment_name": "<TO_FILL>",
+        "log_interval": 50,
+        "checkpoint_interval": 2500
+    },
+    "model_config": {
+        "architecture": "InContextSupervisedTransformer",
+        "model_kwargs": {
+            "output_dim": 1623,
+            "num_contexts": 2,
+            "num_blocks": 2,
+            "num_heads": 1,
+            "embed_dim": 64,
+            "widening_factor": 4,
+            "input_tokenizer": "resnet",
+            "query_pred_only": true,
+            "freeze_input_tokenizer": false
+        }
+    },
+    "optimizer_config": {
+        "optimizer": "adam",
+        "lr": {
+            "scheduler": "linear_warmup_sqrt_decay",
+            "scheduler_kwargs": {
+                "max_lr": 3e-4,
+                "warmup_steps": 4000
+            }
+        },
+        "opt_kwargs": {},
+        "max_grad_norm": false,
+        "mask_names": []
+    },
+    "dataset_name": "omniglot",
+    "dataset_kwargs": {
+        "dataset_size": "<TO_FILL>",
+        "num_high_prob_classes": 20,
+        "num_low_prob_classes": 1603,
+        "p_high": 0.9,
+        "p_relevant_context": "<TO_FILL>",
+        "train": true,
+        "num_contexts": 2,
+        "input_noise_std": "<TO_FILL>",
+        "label_noise": 0.0,
+        "num_relevant_contexts": null,
+        "exemplar": "single"
+    },
+    "shuffle_buffer_size": 100,
+    "num_workers": 6,
+    "batch_size": 32,
+    "num_epochs": 250000,
+    "num_updates_per_epoch": 1,
+    "seeds": {
+        "learner_seed": "<TO_FILL>",
+        "data_seed": "<TO_FILL>"
+    }
+}

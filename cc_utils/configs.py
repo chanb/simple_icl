@@ -1,15 +1,15 @@
-# TODO: Omniglot
 # TODO: Simple ICL model
 
+# Section 5.2
 EXPERIMENTS = {
-    "synthetic-transformer-noisy_inputs": {
+    "omniglot-input_noise": {
         "run_time": "05:00:00",
-        "num_seeds": 5,
+        "num_seeds": 3,
         "variants": [
             {
                 # NOTE: Need to rerun all because increasing number of gradient steps to 100k
                 "key": "dataset_size",
-                "values": [2**12, 2**14, 2**16, 2**18, 2**20]
+                "values": [10 ** 4, 10 ** 5, 10 ** 6]
             },
             {
                 "key": "p_relevant_context",
@@ -17,11 +17,35 @@ EXPERIMENTS = {
             },
             {
                 "key": "input_noise_std",
-                "values": [0.4]
+                "values": [0.0, 0.1, 0.2]
             }
         ]
     },
 }
+
+
+# Section 5.1.1: Run for 500K gradient steps to ensure convergence---this result shouldn't be included because it doesn't show any new insight compared to 100K
+# EXPERIMENTS = {
+#     "synthetic-transformer-noisy_inputs": {
+#         "run_time": "05:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 # NOTE: Need to rerun all because increasing number of gradient steps to 100k
+#                 "key": "dataset_size",
+#                 "values": [2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.0, 0.9, 1.0]
+#             },
+#             {
+#                 "key": "input_noise_std",
+#                 "values": [0.4]
+#             }
+#         ]
+#     },
+# }
 
 # Section 5: Run for longer with added experiments
 # EXPERIMENTS = {
