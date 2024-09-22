@@ -1,6 +1,13 @@
 # Instructions
 
 ## Compute Canada Installation
+Note: It appears that this specific version of PyTorch will speed things up:
+```
+torch==2.2.2+cpu
+torchaudio==2.2.2+cpu
+torchvision==0.17.2+cpu
+```
+
 ### CPU
 ```
 module load StdEnv/2020
@@ -17,6 +24,7 @@ pip install torch torchvision --no-index
 pip install tensorflow --no-index
 pip install tensorflow_datasets --no-index
 pip install scikit-learn --no-index
+pip install prefetch_generator
 ```
 
 ### GPU
@@ -37,6 +45,7 @@ pip install torch torchvision --no-index
 pip install tensorflow --no-index
 pip install tensorflow_datasets --no-index
 pip install scikit-learn --no-index
+pip install prefetch_generator
 ```
 
 ## Setup JupyterHub

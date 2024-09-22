@@ -6,7 +6,6 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
-from gymnasium import spaces
 from types import SimpleNamespace
 from typing import Any
 
@@ -160,7 +159,12 @@ def get_omniglot_seq_generator(
         args=(getattr(dataset_kwargs, "flip_label", 0),),
         output_signature={
             "example": tf.TensorSpec(
-                shape=(dataset_kwargs.num_contexts + 1, omniglot.IMAGE_SIZE, omniglot.IMAGE_SIZE, 1),
+                shape=(
+                    dataset_kwargs.num_contexts + 1,
+                    omniglot.IMAGE_SIZE,
+                    omniglot.IMAGE_SIZE,
+                    1,
+                ),
                 dtype=tf.dtypes.float32,
             ),
             "label": tf.TensorSpec(
@@ -268,6 +272,7 @@ def get_data_loader(config: SimpleNamespace) -> Any:
 
     if dataset_name == "omniglot":
         from torch.utils.data import DataLoader
+
         batch_size = config.batch_size
         shuffle = True
         drop_last = True
@@ -288,14 +293,16 @@ def get_data_loader(config: SimpleNamespace) -> Any:
             getattr(dataset_kwargs, "exemplar", "single"),
         )
 
-        print(num_workers)
-        return DataLoader(
+        return (
+            DataLoader(
+                dataset,
+                batch_size=batch_size,
+                shuffle=shuffle,
+                drop_last=drop_last,
+                num_workers=num_workers,
+            ),
             dataset,
-            batch_size=batch_size,
-            shuffle=shuffle,
-            drop_last=drop_last,
-            num_workers=num_workers,
-        ), dataset
+        )
 
     else:
         if dataset_name == "streamblock":

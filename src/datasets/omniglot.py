@@ -20,8 +20,6 @@ N_EXEMPLARS_PER_CLASS = 20
 N_TRAIN_CLASSES = 964
 N_TEST_CLASSES = 659
 
-idx_cache = dict()
-image_cache = dict()
 
 class Omniglot:
     def __init__(
@@ -81,8 +79,6 @@ class Omniglot:
         )
 
         self._generate_dataset()
-        
-        self.random_key = jrandom.PRNGKey(self.seed)
 
     @property
     def input_space(self):
@@ -103,7 +99,7 @@ class Omniglot:
         ] * self.num_low_prob_classes
 
         rng = np.random.RandomState(self.seed)
-        
+
         self.targets = rng.choice(
             self.num_classes,
             size=(self.dataset_size, self.num_contexts + 1),
@@ -141,9 +137,9 @@ class Omniglot:
                 context_from_query[relevant_context_idxes] == 0
             )[0]
 
-            self.targets[
-                relevant_context_idxes[no_context_from_query_idxes], -1
-            ] = rng.choice(self.num_contexts, size=(len(no_context_from_query_idxes),))
+            self.targets[relevant_context_idxes[no_context_from_query_idxes], -1] = (
+                rng.choice(self.num_contexts, size=(len(no_context_from_query_idxes),))
+            )
 
         else:
             self.targets[relevant_context_idxes, : self.num_relevant_contexts] = (
@@ -202,38 +198,23 @@ class Omniglot:
         toc = timeit.default_timer()
         print("dataset generation took {}s".format(toc - tic))
 
-    def get_index(self, target, key):
-        if self.exemplar == "single":
-            return target * N_EXEMPLARS_PER_CLASS
-        else:
-            offset = jrandom.randint(key, 0, N_EXEMPLARS_PER_CLASS)
-            return target * N_EXEMPLARS_PER_CLASS + offset
-
-
     def get_image(self, target, sample_i, context_i):
-        curr_sample = self.num_contexts * sample_i + context_i
-        if curr_sample not in idx_cache:
-            key = jrandom.fold_in(
-                self.random_key,
-                self.num_contexts * sample_i + context_i
-            )
-            idx = self.get_index(target, key)
-            idx_cache[curr_sample] = (idx, key)
-        else:
-            (idx, key) = idx_cache[curr_sample]
+        rng = np.random.RandomState(
+            self.seed * self.num_contexts * sample_i + context_i
+        )
 
-        if idx not in image_cache:
-            image = (
-                self.train_dataset[idx]
-                if target < N_TRAIN_CLASSES else
-                self.test_dataset[idx - N_EXEMPLARS_PER_CLASS * N_TRAIN_CLASSES]
-            )[0]
-            image = np.array(image)[..., None].astype(np.float32) / 255.0
-            image_cache[idx] = image
-        else:
-            image = image_cache[idx]
+        offset = 0
+        if self.exemplar != "single":
+            offset = rng.randint(0, N_CHARACTER_CLASSES)
 
-        image += self.input_noise_std * jrandom.normal(key, image.shape)
+        idx = target * N_EXEMPLARS_PER_CLASS + offset
+        image = (
+            self.train_dataset[idx]
+            if target < N_TRAIN_CLASSES
+            else self.test_dataset[idx - N_EXEMPLARS_PER_CLASS * N_TRAIN_CLASSES]
+        )[0]
+        image = np.array(image)[..., None].astype(np.float32) / 255.0
+        image += self.input_noise_std * rng.randn(*image.shape)
         return image
 
     def get_sequences(
@@ -246,10 +227,12 @@ class Omniglot:
             label = self.targets[sample_i]
 
             # Get example and reshape to (N, H, W, C) and normalize
-            example = np.stack([
-                self.get_image(target_i, sample_i, context_i)
-                for context_i, target_i in enumerate(label)
-            ])
+            example = np.stack(
+                [
+                    self.get_image(target_i, sample_i, context_i)
+                    for context_i, target_i in enumerate(label)
+                ]
+            )
 
             # OOD labels: Make sure OOD label is still within the same frequency class
             if flip_label:
@@ -282,22 +265,14 @@ class Omniglot:
 
     def __len__(self):
         return self.dataset_size
-    
+
     def __getitem__(self, sample_i):
-        tic = timeit.default_timer()
         label = self.targets[sample_i]
-        toc = timeit.default_timer()
-        print("get target {}".format(toc - tic))
-        tic = timeit.default_timer()
 
         # Get example and reshape to (N, H, W, C) and normalize
         example = np.zeros((self.num_contexts + 1, *self.input_space.shape))
         for context_i, target_i in enumerate(label):
             example[context_i] = self.get_image(target_i, sample_i, context_i)
-
-        toc = timeit.default_timer()
-        print("get example {}".format(toc - tic))
-        tic = timeit.default_timer()
 
         # OOD labels: Make sure OOD label is still within the same frequency class
         if self.flip_label:
@@ -310,33 +285,19 @@ class Omniglot:
                 label[low_prob_class_idxes] - self.num_high_prob_classes + 1
             ) % self.num_low_prob_classes + self.num_high_prob_classes
 
-        toc = timeit.default_timer()
-        print("flip label {}".format(toc - tic))
-        tic = timeit.default_timer()
-
         # Get label distribution
         target = label[-1]
         label_dist = np.zeros(self.num_classes)
         label_dist[target] = 1 - self.label_noise
         label_dist[(target + 1) % self.num_classes] = self.label_noise
 
-        toc = timeit.default_timer()
-        print("label dist {}".format(toc - tic))
-        tic = timeit.default_timer()
-
         # Label noise
         swap_label = self.swap_labels[sample_i]
         label = np.where(swap_label, (label + 1) % self.num_classes, label)
-        toc = timeit.default_timer()
-        print("label noise {}".format(toc - tic))
-        tic = timeit.default_timer()
 
         one_hot = np.zeros((self.num_contexts + 1, self.num_classes))
         one_hot[np.arange(self.num_contexts + 1), label] = 1
 
-        toc = timeit.default_timer()
-        print("last {}".format(toc - tic))
-        tic = timeit.default_timer()
         return {
             "example": example,
             "target": one_hot,

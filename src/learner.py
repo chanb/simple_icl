@@ -6,11 +6,11 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
+from prefetch_generator import BackgroundGenerator
 from types import SimpleNamespace
-from typing import Any, Dict, Union, Sequence
+from typing import Any, Dict, Sequence
 
 import chex
-import flax
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
@@ -72,6 +72,20 @@ class InContextLearner:
         self._initialize_model_and_opt()
         self._initialize_losses()
         self.train_step = jax.jit(self.make_train_step())
+        self.ds = BackgroundGenerator(self.get_iter(), max_prefetch=getattr(config, "num_wokrers", 2))
+
+    def get_iter(self):
+        while True:
+            try:
+                batch = next(self._train_loader)
+            except StopIteration:
+                self._train_loader = iter(self._train_data_loader)
+                batch = next(self._train_loader)
+
+            for k, v in batch.items():
+                if hasattr(v, "numpy"):
+                    batch[k] = v.numpy()
+            yield jax.device_put(batch)
 
     def close(self):
         del self._train_loader
@@ -188,16 +202,7 @@ class InContextLearner:
         total_update_time = 0
         for update_i in range(self._num_updates_per_epoch):
             tic = timeit.default_timer()
-            try:
-                batch = next(self._train_loader)
-            except StopIteration:
-                self._train_loader = iter(self._train_data_loader)
-                batch = next(self._train_loader)
-
-            for k, v in batch.items():
-                if hasattr(v, "numpy"):
-                    batch[k] = v.numpy()
-
+            batch = next(self.ds)
             total_sample_time += timeit.default_timer() - tic
 
             self._learner_key = jrandom.fold_in(

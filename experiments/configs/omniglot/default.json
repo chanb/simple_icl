@@ -1,6 +1,6 @@
 {
     "logging_config": {
-        "save_path": "/home/chanb/scratch/omniglot/results",
+        "save_path": "./results_omniglot",
         "experiment_name": "p_bursty_0.0",
         "log_interval": 50,
         "checkpoint_interval": 1000
