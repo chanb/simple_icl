@@ -20,7 +20,7 @@ N_EXEMPLARS_PER_CLASS = 20
 N_TRAIN_CLASSES = 964
 N_TEST_CLASSES = 659
 
-
+idx_cache = dict()
 image_cache = dict()
 
 class Omniglot:
@@ -212,22 +212,28 @@ class Omniglot:
         
         def get_image(target, sample_i, context_i):
             curr_sample = self.num_contexts * sample_i + context_i
-            if curr_sample not in image_cache:
+            if curr_sample not in idx_cache:
                 key = jrandom.fold_in(
                     random_key,
                     self.num_contexts * sample_i + context_i
                 )
                 idx = get_index(target, key)
+                idx_cache[curr_sample] = (idx, key)
+            else:
+                (idx, key) = idx_cache[curr_sample]
+
+            if idx not in image_cache:
                 image = (
                     self.train_dataset[idx]
                     if target < N_TRAIN_CLASSES else
                     self.test_dataset[idx - N_EXEMPLARS_PER_CLASS * N_TRAIN_CLASSES]
                 )[0]
                 image = np.array(image)[..., None].astype(np.float32) / 255.0
-                image += self.input_noise_std * jrandom.normal(key, image.shape)
-                image_cache[curr_sample] = image
+                image_cache[idx] = image
             else:
-                image = image_cache[curr_sample]
+                image = image_cache[idx]
+
+            image += self.input_noise_std * jrandom.normal(key, image.shape)
             return image
 
         while True:
