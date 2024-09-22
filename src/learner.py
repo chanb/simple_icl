@@ -191,8 +191,13 @@ class InContextLearner:
             try:
                 batch = next(self._train_loader)
             except StopIteration:
-                self._train_loader = iter(self._train_dataloader)
+                self._train_loader = iter(self._train_data_loader)
                 batch = next(self._train_loader)
+
+            for k, v in batch.items():
+                if hasattr(v, "numpy"):
+                    batch[k] = v.numpy()
+
             total_sample_time += timeit.default_timer() - tic
 
             self._learner_key = jrandom.fold_in(
