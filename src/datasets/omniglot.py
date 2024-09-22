@@ -211,18 +211,23 @@ class Omniglot:
                 return target * N_EXEMPLARS_PER_CLASS + offset
         
         def get_image(target, sample_i, context_i):
-            key = jrandom.fold_in(
-                random_key,
-                self.num_contexts * sample_i + context_i
-            )
-            idx = get_index(target, key)
-            image = (
-                self.train_dataset[idx]
-                if target < N_TRAIN_CLASSES else
-                self.test_dataset[idx - N_EXEMPLARS_PER_CLASS * N_TRAIN_CLASSES]
-            )[0]
-            image = np.array(image)[..., None].astype(np.float32) / 255.0
-            image += self.input_noise_std * jrandom.normal(key, image.shape)
+            curr_sample = self.num_contexts * sample_i + context_i
+            if curr_sample not in image_cache:
+                key = jrandom.fold_in(
+                    random_key,
+                    self.num_contexts * sample_i + context_i
+                )
+                idx = get_index(target, key)
+                image = (
+                    self.train_dataset[idx]
+                    if target < N_TRAIN_CLASSES else
+                    self.test_dataset[idx - N_EXEMPLARS_PER_CLASS * N_TRAIN_CLASSES]
+                )[0]
+                image = np.array(image)[..., None].astype(np.float32) / 255.0
+                image += self.input_noise_std * jrandom.normal(key, image.shape)
+                image_cache[curr_sample] = image
+            else:
+                image = image_cache[curr_sample]
             return image
 
         while True:
