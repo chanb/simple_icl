@@ -154,6 +154,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
     if exp_name.startswith("omniglot"):
         sbatch_content += "tar xf $HOME/torch_datasets.tar -C $SLURM_TMPDIR\n"
 
+    # TODO: XLA_PYTHON_CLIENT_MEM_FRACTION
+    # TODO: --device=gpu:0
     sbatch_content += "python3 {}/src/main.py \\\n".format(REPO_PATH)
     sbatch_content += "  --config_path=${config_path} \n"
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
