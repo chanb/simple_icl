@@ -221,10 +221,11 @@ class Synthetic:
             swap_label = self.swap_labels[sample_i]
             label = np.where(swap_label, (label + 1) % self.num_classes, label)
 
-            label = np.eye(self.num_classes)[label]
+            one_hot = np.zeros((self.num_contexts + 1, self.num_classes))
+            one_hot[np.arange(self.num_contexts + 1), label] = 1
 
             yield {
                 "example": example,
-                "label": label,
+                "label": one_hot,
                 "label_dist": label_dist,
             }
