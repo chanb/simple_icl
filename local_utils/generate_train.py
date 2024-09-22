@@ -18,7 +18,7 @@ from local_utils.constants import (
     REPO_PATH,
 )
 
-NUM_GPUS = 3
+NUM_GPUS = 4
 NUM_PARALLEL = NUM_GPUS if NUM_GPUS > 0 else 10
 
 sbatch_dir = "./sbatch_scripts"

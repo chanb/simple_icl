@@ -1,4 +1,4 @@
-HOME_DIR = "/Users/chanb/research/ualberta/icl"
+HOME_DIR = "/home/bryanpu1/projects/icl"
 CONFIG_DIR = f"{HOME_DIR}/scratch/configs"
 EVAL_DIR = f"{HOME_DIR}/scratch/evaluation_results"
 LOG_DIR = f"{HOME_DIR}/scratch/results"
