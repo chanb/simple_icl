@@ -206,11 +206,11 @@ def main(args: SimpleNamespace):
             num_eval_samples,
         )
 
-    train_data_loader, train_dataset = get_data_loader(
+    train_ds, train_dataset = get_data_loader(
         config,
     )
     datasets["pretraining"] = (
-        train_data_loader,
+        train_ds,
         train_dataset,
     )
     dataset_configs["pretraining"] = config.dataset_kwargs
@@ -218,10 +218,9 @@ def main(args: SimpleNamespace):
 
     prefetched_data = {}
     for eval_name in tqdm(datasets, postfix="Prefetching data"):
-        data_loader, dataset = datasets[eval_name]
-        data_iter = iter(data_loader)
+        ds, dataset = datasets[eval_name]
         prefetched_data[eval_name] = dict(
-            samples=[next(data_iter) for _ in range((num_pretrain_samples if eval_name == "pretraining" else num_eval_samples) // batch_size)],
+            samples=[next(ds) for _ in range((num_pretrain_samples if eval_name == "pretraining" else num_eval_samples) // batch_size)],
             dataset_output_dim=dataset.output_space.n,
         )
 

@@ -6,7 +6,6 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
-from prefetch_generator import BackgroundGenerator
 from types import SimpleNamespace
 from typing import Any, Dict, Sequence
 
@@ -64,15 +63,13 @@ class InContextLearner:
         self._num_updates_per_epoch = config.num_updates_per_epoch
         self._learner_key = jrandom.PRNGKey(config.seeds.learner_seed)
 
-        self._train_data_loader, self._dataset = get_data_loader(
+        self.ds, self._dataset = get_data_loader(
             config,
         )
-        self._train_loader = iter(self._train_data_loader)
 
         self._initialize_model_and_opt()
         self._initialize_losses()
         self.train_step = jax.jit(self.make_train_step())
-        self.ds = BackgroundGenerator(self.get_iter(), max_prefetch=getattr(config, "num_wokrers", 2))
 
     def get_iter(self):
         while True:
@@ -88,8 +85,7 @@ class InContextLearner:
             yield jax.device_put(batch)
 
     def close(self):
-        del self._train_loader
-        del self._train_data_loader
+        del self.ds
 
     @property
     def model(self):

@@ -6,9 +6,11 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
+from prefetch_generator import BackgroundGenerator
 from types import SimpleNamespace
 from typing import Any
 
+import jax
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -266,6 +268,21 @@ def prepare_seqs_for_icl(ds, num_classes: int):
     return ds.flat_map(_convert_dict)
 
 
+def get_iter(data_loader):
+    loader = iter(data_loader)
+    while True:
+        try:
+            batch = next(loader)
+        except StopIteration:
+            loader = iter(data_loader)
+            batch = next(loader)
+
+        for k, v in batch.items():
+            if hasattr(v, "numpy"):
+                batch[k] = v.numpy()
+        yield jax.device_put(batch)
+
+
 def get_data_loader(config: SimpleNamespace) -> Any:
     dataset_name = config.dataset_name
     dataset_kwargs = config.dataset_kwargs
@@ -293,15 +310,22 @@ def get_data_loader(config: SimpleNamespace) -> Any:
             getattr(dataset_kwargs, "exemplar", "single"),
         )
 
-        return (
-            DataLoader(
-                dataset,
-                batch_size=batch_size,
-                shuffle=shuffle,
-                drop_last=drop_last,
-                num_workers=num_workers,
-            ),
+        # return (
+        #     DataLoader(
+        #         dataset,
+        #         batch_size=batch_size,
+        #         shuffle=shuffle,
+        #         drop_last=drop_last,
+        #         num_workers=num_workers,
+        #     ),
+        #     dataset,
+        # )
+        loader = DataLoader(
             dataset,
+            batch_size=batch_size,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            num_workers=num_workers,
         )
 
     else:
@@ -322,4 +346,10 @@ def get_data_loader(config: SimpleNamespace) -> Any:
             dataset.output_space.n,
         )
         ds = ds.repeat().shuffle(buffer_size=shuffle_buffer_size)
-        return tfds.as_numpy(ds), dataset
+        # return tfds.as_numpy(ds), dataset
+        loader = tfds.as_numpy(ds)
+
+    loader = get_iter(loader)
+    loader = BackgroundGenerator(loader, max_prefetch=num_workers)
+
+    return loader, dataset
