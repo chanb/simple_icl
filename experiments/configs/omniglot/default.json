@@ -1,6 +1,6 @@
 {
     "logging_config": {
-        "save_path": "./results/omniglot",
+        "save_path": "/home/chanb/scratch/omniglot/results",
         "experiment_name": "p_bursty_0.0",
         "log_interval": 50,
         "checkpoint_interval": 1000
@@ -9,7 +9,7 @@
         "architecture": "InContextSupervisedTransformer",
         "model_kwargs": {
             "output_dim": 1623,
-            "num_contexts": 1,
+            "num_contexts": 8,
             "num_blocks": 2,
             "num_heads": 1,
             "embed_dim": 64,
@@ -40,9 +40,10 @@
         "p_high": 0.9,
         "p_relevant_context": 0.0,
         "train": true,
-        "num_contexts": 1,
+        "num_contexts": 8,
         "input_noise_std": 0.0,
         "label_noise": 0.0,
+        "num_relevant_contexts": 3,
         "exemplar": "single"
     },
     "shuffle_buffer_size": 100,
