@@ -3,7 +3,7 @@
 # Section 5.2
 EXPERIMENTS = {
     "omniglot-input_noise": {
-        "run_time": "05:00:00",
+        "run_time": "06:00:00",
         "num_seeds": 3,
         "variants": [
             {
