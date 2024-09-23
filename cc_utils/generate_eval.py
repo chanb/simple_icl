@@ -43,28 +43,17 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += "#SBATCH --account={}\n".format(CC_ACCOUNT)
     sbatch_content += "#SBATCH --time={}\n".format(exp_config["run_time"])
 
-    if exp_name.startswith("omniglot"):
-        sbatch_content += "#SBATCH --cpus-per-task=4\n"
-        sbatch_content += "#SBATCH --gres=gpu:1\n"
-        sbatch_content += "#SBATCH --mem=6G\n"
-    else:
-        sbatch_content += "#SBATCH --cpus-per-task=1\n"
-        sbatch_content += "#SBATCH --mem=3G\n"
+    sbatch_content += "#SBATCH --cpus-per-task=1\n"
+    sbatch_content += "#SBATCH --mem=3G\n"
 
     sbatch_content += "#SBATCH --array=1-{}\n".format(num_runs)
     sbatch_content += "#SBATCH --output={}/%j.out\n".format(
         os.path.join(RUN_REPORT_DIR, "eval", exp_name)
     )
 
-    if exp_name.startswith("omniglot"):
-        sbatch_content += "module load StdEnv/2023\n"
-        sbatch_content += "module load python/3.10\n"
-        sbatch_content += "module load cuda/12.2\n"
-        sbatch_content += "source ~/simple_icl_gpu/bin/activate\n"
-    else:
-        sbatch_content += "module load StdEnv/2020\n"
-        sbatch_content += "module load python/3.10\n"
-        sbatch_content += "source ~/simple_icl/bin/activate\n"
+    sbatch_content += "module load StdEnv/2020\n"
+    sbatch_content += "module load python/3.10\n"
+    sbatch_content += "source ~/simple_icl/bin/activate\n"
 
     sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
     sbatch_content += " < {}`\n".format(
@@ -77,10 +66,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += 'echo "Starting run at: `date`"\n'
 
     if exp_name.startswith("omniglot"):
-        sbatch_content += "mkdir $SLURM_TMPDIR/tensorflow_datasets\n"
-        sbatch_content += "tar xf {} -C $SLURM_TMPDIR/tensorflow_datasets\n".format(
-            os.path.join(HOME_DIR, "tensorflow_datasets")
-        )
+        sbatch_content += "tar xf $HOME/torch_datasets.tar -C $SLURM_TMPDIR\n"
 
     sbatch_content += "python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
     sbatch_content += "  --learner_path=${learner_path} \\\n"
