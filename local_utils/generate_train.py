@@ -7,6 +7,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 import json
+import numpy as np
 
 from itertools import product
 
@@ -61,7 +62,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content = ""
     sbatch_content += "#!/bin/bash\n"
     sbatch_content += "source {}/.venv/bin/activate\n".format(HOME_DIR)
-    for seed in range(exp_config["num_seeds"]):
+    for seed in np.arange(exp_config["num_seeds"]):
+        seed = int(seed)
         for variant_config in agg(*variant_values):
             variant_name = "-".join(
                 [
