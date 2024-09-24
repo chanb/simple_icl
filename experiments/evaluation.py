@@ -25,7 +25,7 @@ from experiments.utils import *
 
 from src.constants import *
 from src.dataset import get_data_loader
-from src.utils import parse_dict, load_config, iterate_models, set_seed
+from src.utils import parse_dict, load_config, iterate_models, set_seed, get_device
 
 
 def get_omniglot_eval_datasets(
@@ -131,7 +131,6 @@ def get_synthetic_eval_datasets(
     test_data_seed: int,
     context_len: int,
     num_eval_samples: int,
-    skip_test: bool = False,
     p_relevant_context: float = None,
 ):
     configs = dict()
@@ -168,6 +167,10 @@ def main(args: SimpleNamespace):
     num_eval_samples = args.num_eval_samples
     test_data_seed = args.test_data_seed
     p_relevant_context = args.p_relevant_context
+    num_workers = args.num_workers
+    device = args.device
+
+    get_device(device)
 
     set_seed(0)
 
@@ -175,6 +178,7 @@ def main(args: SimpleNamespace):
 
     config_dict, config = load_config(learner_path)
     config_dict["batch_size"] = batch_size
+    config_dict["num_workers"] = num_workers
     if "dataset_name" not in config_dict:
         config_dict["dataset_name"] = "streamblock"
     config = parse_dict(config_dict)
@@ -197,10 +201,11 @@ def main(args: SimpleNamespace):
             context_len,
         )
     elif config.dataset_name == "omniglot":
-        datasets, dataset_configs = get_omniglot_eval_datasets(
+        datasets, dataset_configs = get_synthetic_eval_datasets(
             config_dict,
             test_data_seed,
             context_len,
+            num_eval_samples,
             p_relevant_context,
         )
     elif config.dataset_name == "synthetic":
@@ -303,6 +308,18 @@ if __name__ == "__main__":
         type=float,
         default=None,
         help="Probability of relevant contexts"
+    )
+    parser.add_argument(
+        "--num_workers",
+        type=int,
+        default=2,
+        help="The number of workers",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cpu",
+        help="The device to use",
     )
     args = parser.parse_args()
 
