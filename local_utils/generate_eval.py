@@ -15,7 +15,9 @@ from local_utils.constants import (
     REPO_PATH,
 )
 
-NUM_PARALLEL = 10
+NUM_GPUS = 4
+# NUM_PARALLEL = NUM_GPUS if NUM_GPUS > 0 else 10
+NUM_PARALLEL = 4
 
 sbatch_dir = "./sbatch_scripts"
 os.makedirs(sbatch_dir, exist_ok=True)
@@ -32,7 +34,11 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
         num_runs += 1
 
-        sbatch_content += "python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
+        if exp_name.startswith("omniglot"):
+            sbatch_content += "XLA_PYTHON_CLIENT_MEM_FRACTION=0.95 python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
+            sbatch_content += "  --device=gpu:{} \\\n".format(num_runs % NUM_GPUS)
+        else:
+            sbatch_content += "python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
         sbatch_content += "  --learner_path={} \\\n".format(learner_path)
         sbatch_content += "  --save_path={} &\n".format(os.path.join(EVAL_DIR, exp_name))
 
