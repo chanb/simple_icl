@@ -37,6 +37,7 @@ class Omniglot:
         label_noise: float = 0.0,
         num_relevant_contexts: int = None,
         exemplar: str = "single",
+        flip_label: bool = False,
     ):
         assert 0.0 < p_high < 1.0
         assert p_high / num_high_prob_classes >= (1 - p_high) / num_low_prob_classes
@@ -59,7 +60,7 @@ class Omniglot:
         self.conditioning = conditioning
         self.rng = np.random.RandomState(seed)
         self.exemplar = exemplar
-        self.flip_label = False
+        self.flip_label = flip_label
 
         data_dir = os.path.join(os.environ["HOME"], "torch_datasets")
         download = True

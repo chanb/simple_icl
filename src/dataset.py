@@ -308,6 +308,7 @@ def get_data_loader(config: SimpleNamespace) -> Any:
             getattr(dataset_kwargs, "label_noise", 0.0),
             getattr(dataset_kwargs, "num_relevant_contexts", None),
             getattr(dataset_kwargs, "exemplar", "single"),
+            getattr(dataset_kwargs, "flip_label", False),
         )
 
         loader = DataLoader(
