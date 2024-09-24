@@ -33,7 +33,7 @@ EXPERIMENTS = {
             },
             {
                 "key": "input_noise_std",
-                "values": [0.0, 0.1, 0.2]
+                "values": [0.1, 0.2]
             },
         ]
     },
