@@ -132,6 +132,7 @@ def get_synthetic_eval_datasets(
     context_len: int,
     num_eval_samples: int,
     skip_test: bool = False,
+    p_relevant_context: float = None,
 ):
     configs = dict()
 
@@ -146,6 +147,8 @@ def get_synthetic_eval_datasets(
                     eval_config_dict["dataset_kwargs"]["p_relevant_context"] = 1.0
                 elif relevant_context == "irrelevant_context":
                     eval_config_dict["dataset_kwargs"]["p_relevant_context"] = 0.0
+                elif p_relevant_context is not None:
+                    eval_config_dict["dataset_kwargs"]["p_relevant_context"] = p_relevant_context
                 eval_config_dict["dataset_kwargs"]["conditioning"] = conditioning
                 eval_config_dict["dataset_kwargs"]["flip_label"] = flip_label
 
@@ -164,6 +167,7 @@ def main(args: SimpleNamespace):
     batch_size = args.batch_size
     num_eval_samples = args.num_eval_samples
     test_data_seed = args.test_data_seed
+    p_relevant_context = args.p_relevant_context
 
     set_seed(0)
 
@@ -197,6 +201,7 @@ def main(args: SimpleNamespace):
             config_dict,
             test_data_seed,
             context_len,
+            p_relevant_context,
         )
     elif config.dataset_name == "synthetic":
         datasets, dataset_configs = get_synthetic_eval_datasets(
@@ -204,6 +209,7 @@ def main(args: SimpleNamespace):
             test_data_seed,
             context_len,
             num_eval_samples,
+            p_relevant_context,
         )
 
     train_ds, train_dataset = get_data_loader(
@@ -291,6 +297,12 @@ if __name__ == "__main__":
         type=int,
         default=1000,
         help="The seed for generating the test data",
+    )
+    parser.add_argument(
+        "--p_relevant_context",
+        type=float,
+        default=None,
+        help="Probability of relevant contexts"
     )
     args = parser.parse_args()
 
