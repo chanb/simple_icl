@@ -38,11 +38,11 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
         num_runs += 1
 
-        if exp_name.startswith("omniglot"):
+        if exp_name.startswith("omniglot") and NUM_GPUS > 0:
             sbatch_content += "XLA_PYTHON_CLIENT_MEM_FRACTION=0.95 python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
             sbatch_content += "  --device=gpu:{} \\\n".format(AVAIL_GPUS[num_runs % NUM_GPUS])
         else:
-            sbatch_content += "python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
+            sbatch_content += "JAX_PLATFORMS=cpu python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
         sbatch_content += "  --learner_path={} \\\n".format(learner_path)
         sbatch_content += "  --save_path={} &\n".format(os.path.join(EVAL_DIR, exp_name))
 
