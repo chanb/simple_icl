@@ -156,10 +156,6 @@ class Omniglot:
             assert len(no_context_from_query_idxes) == 0
 
         else:
-            self.targets[relevant_context_idxes, : self.num_relevant_contexts] = (
-                self.targets[relevant_context_idxes, -1][..., None]
-            )
-
             if self.num_relevant_contexts != self.num_contexts:
                 no_context_from_query_idxes = np.where(
                     context_from_query[relevant_context_idxes]
@@ -192,6 +188,10 @@ class Omniglot:
                 assert np.all(np.sum(
                     self.targets[relevant_context_idxes, :-1] == self.targets[relevant_context_idxes, [-1]][..., None], axis=-1
                 ) == self.num_relevant_contexts)
+            else:
+                self.targets[relevant_context_idxes, : self.num_relevant_contexts] = (
+                    self.targets[relevant_context_idxes, -1][..., None]
+                )
 
         irrelevant_context_idxes = np.where(relevant_context_mask == 0)[0]
         has_context_from_query_idxes = np.where(
