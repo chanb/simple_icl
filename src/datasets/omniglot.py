@@ -138,9 +138,21 @@ class Omniglot:
                 context_from_query[relevant_context_idxes] == 0
             )[0]
 
-            self.targets[relevant_context_idxes[no_context_from_query_idxes], -1] = (
-                rng.choice(self.num_contexts, size=(len(no_context_from_query_idxes),))
-            )
+            while len(no_context_from_query_idxes) > 0:
+                self.targets[
+                    relevant_context_idxes[no_context_from_query_idxes], :-1
+                ] = rng.choice(
+                    self.num_classes,
+                    size=(len(no_context_from_query_idxes), self.num_contexts),
+                    p=weights,
+                )
+                context_from_query = np.sum(
+                    self.targets[:, :-1] == self.targets[:, [-1]], axis=-1
+                )
+
+                no_context_from_query_idxes = np.where(
+                    context_from_query[relevant_context_idxes] == 0
+                )[0]
 
         else:
             self.targets[relevant_context_idxes, : self.num_relevant_contexts] = (
