@@ -22,7 +22,7 @@ os.makedirs(sbatch_dir, exist_ok=True)
 
 run_all_content = "#!/bin/bash\n"
 for exp_name, exp_config in EXPERIMENTS.items():
-    os.makedirs(os.path.join(RUN_REPORT_DIR, "eval"), exist_ok=True)
+    os.makedirs(os.path.join(RUN_REPORT_DIR, "baselines"), exist_ok=True)
     result_dir = os.path.join(LOG_DIR, exp_name)
     num_runs = 0
     dat_content = ""
@@ -38,37 +38,50 @@ for exp_name, exp_config in EXPERIMENTS.items():
     for variant in os.listdir(result_dir):
         learner_path = os.path.join(result_dir, variant)
 
-        if "p_relevant_context_0.0" in variant or "p_relevant_context_1.0" in variant:
+        if "p_relevant_context_0.0" not in variant and "p_relevant_context_1.0" not in variant:
             continue
 
-        num_runs += 1
-        dat_content += "export learner_path={} \n".format(
-            learner_path,
-        )
+        for p_relevant_context in p_relevant_contexts:
+            num_runs += 1
+            dat_content += "export learner_path={} p_relevant_context={} \n".format(
+                learner_path,
+                p_relevant_context,
+            )
 
-    with open(os.path.join(CONFIG_DIR, "eval_baselines-{}.dat".format(exp_name)), "w+") as f:
+    with open(os.path.join(CONFIG_DIR, "baselines-{}.dat".format(exp_name)), "w+") as f:
         f.writelines(dat_content)
 
     sbatch_content = ""
     sbatch_content += "#!/bin/bash\n"
     sbatch_content += "#SBATCH --account={}\n".format(CC_ACCOUNT)
-    sbatch_content += "#SBATCH --time={}\n".format(exp_config["run_time"])
+    sbatch_content += "#SBATCH --time={}\n".format(exp_config["eval_run_time"])
 
-    sbatch_content += "#SBATCH --cpus-per-task=1\n"
-    sbatch_content += "#SBATCH --mem=3G\n"
+    if exp_name.startswith("omniglot"):
+        sbatch_content += "#SBATCH --cpus-per-task=6\n"
+        sbatch_content += "#SBATCH --gres=gpu:1\n"
+        sbatch_content += "#SBATCH --mem=6G\n"
+    else:
+        sbatch_content += "#SBATCH --cpus-per-task=1\n"
+        sbatch_content += "#SBATCH --mem=3G\n"
 
     sbatch_content += "#SBATCH --array=1-{}\n".format(num_runs)
     sbatch_content += "#SBATCH --output={}/%j.out\n".format(
-        os.path.join(RUN_REPORT_DIR, "eval", exp_name)
+        os.path.join(RUN_REPORT_DIR, "baselines", exp_name)
     )
 
-    sbatch_content += "module load StdEnv/2020\n"
-    sbatch_content += "module load python/3.10\n"
-    sbatch_content += "source ~/simple_icl/bin/activate\n"
+    if exp_name.startswith("omniglot"):
+        sbatch_content += "module load StdEnv/2023\n"
+        sbatch_content += "module load python/3.10\n"
+        sbatch_content += "module load cuda/12.2\n"
+        sbatch_content += "source ~/simple_icl_gpu/bin/activate\n"
+    else:
+        sbatch_content += "module load StdEnv/2020\n"
+        sbatch_content += "module load python/3.10\n"
+        sbatch_content += "source ~/simple_icl/bin/activate\n"
 
     sbatch_content += '`sed -n "${SLURM_ARRAY_TASK_ID}p"'
     sbatch_content += " < {}`\n".format(
-        os.path.join(CONFIG_DIR, "eval_baselines-{}.dat".format(exp_name))
+        os.path.join(CONFIG_DIR, "baselines-{}.dat".format(exp_name))
     )
     sbatch_content += "echo ${SLURM_ARRAY_TASK_ID}\n"
     sbatch_content += 'echo "Current working directory is `pwd`"\n'
@@ -78,13 +91,17 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
     if exp_name.startswith("omniglot"):
         sbatch_content += "tar xf $HOME/torch_datasets.tar -C $SLURM_TMPDIR\n"
+        sbatch_content += "XLA_PYTHON_CLIENT_MEM_FRACTION=0.9 python3 {}/src/main.py \\\n".format(REPO_PATH)
+        sbatch_content += "  --device=gpu:0 \\\n"
+    else:
+        sbatch_content += "python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
 
-    sbatch_content += "python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
     sbatch_content += "  --learner_path=${learner_path} \\\n"
+    sbatch_content += "  --p_relevant_context=${p_relevant_context} \\\n"
     sbatch_content += "  --save_path={} \n".format(os.path.join(EVAL_DIR, exp_name))
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 
-    script_path = os.path.join(sbatch_dir, f"run_all-eval_baselines-{exp_name}.sh")
+    script_path = os.path.join(sbatch_dir, f"run_all-baselines-{exp_name}.sh")
     with open(
         script_path,
         "w+",
@@ -94,7 +111,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     run_all_content += "sbatch {}\n".format(script_path)
 
 with open(
-    "./sbatch_all_eval_baselines.sh",
+    "./sbatch_all_baselines.sh",
     "w+",
 ) as f:
     f.writelines(run_all_content)
