@@ -98,7 +98,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
     sbatch_content += "  --learner_path=${learner_path} \\\n"
     sbatch_content += "  --p_relevant_context=${p_relevant_context} \\\n"
-    sbatch_content += "  --save_path={} \n".format(os.path.join(EVAL_DIR, exp_name))
+    sbatch_content += "  --save_path={} &\n".format(os.path.join(EVAL_DIR, exp_name, "p_relevant_context_{}".format(p_relevant_context)))
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 
     script_path = os.path.join(sbatch_dir, f"run_all-baselines-{exp_name}.sh")
