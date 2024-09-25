@@ -136,6 +136,9 @@ class Synthetic:
                     != self.num_relevant_contexts
                 )[0]
                 while len(no_context_from_query_idxes) > 0:
+                    self.targets[relevant_context_idxes[no_context_from_query_idxes], : self.num_relevant_contexts] = (
+                        self.targets[relevant_context_idxes[no_context_from_query_idxes], -1][..., None]
+                    )
                     self.targets[
                         relevant_context_idxes[no_context_from_query_idxes],
                         self.num_relevant_contexts : -1,
