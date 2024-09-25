@@ -81,7 +81,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
     if exp_name.startswith("omniglot"):
         sbatch_content += "tar xf $HOME/torch_datasets.tar -C $SLURM_TMPDIR\n"
-        sbatch_content += "XLA_PYTHON_CLIENT_MEM_FRACTION=0.9 python3 {}/src/main.py \\\n".format(REPO_PATH)
+        sbatch_content += "XLA_PYTHON_CLIENT_MEM_FRACTION=0.9 python3 {}/src/evaluation.py \\\n".format(REPO_PATH)
         sbatch_content += "  --device=gpu:0 \\\n"
     else:
         sbatch_content += "python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
