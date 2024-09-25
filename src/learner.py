@@ -7,10 +7,9 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 from types import SimpleNamespace
-from typing import Any, Dict, Union, Sequence
+from typing import Any, Dict, Sequence
 
 import chex
-import flax
 import jax
 import jax.numpy as jnp
 import jax.random as jrandom
@@ -64,18 +63,29 @@ class InContextLearner:
         self._num_updates_per_epoch = config.num_updates_per_epoch
         self._learner_key = jrandom.PRNGKey(config.seeds.learner_seed)
 
-        self._train_data_loader, self._dataset = get_data_loader(
+        self.ds, self._dataset = get_data_loader(
             config,
         )
-        self._train_loader = iter(self._train_data_loader)
 
         self._initialize_model_and_opt()
         self._initialize_losses()
         self.train_step = jax.jit(self.make_train_step())
 
+    def get_iter(self):
+        while True:
+            try:
+                batch = next(self._train_loader)
+            except StopIteration:
+                self._train_loader = iter(self._train_data_loader)
+                batch = next(self._train_loader)
+
+            for k, v in batch.items():
+                if hasattr(v, "numpy"):
+                    batch[k] = v.numpy()
+            yield jax.device_put(batch)
+
     def close(self):
-        del self._train_loader
-        del self._train_data_loader
+        del self.ds
 
     @property
     def model(self):
@@ -188,11 +198,7 @@ class InContextLearner:
         total_update_time = 0
         for update_i in range(self._num_updates_per_epoch):
             tic = timeit.default_timer()
-            try:
-                batch = next(self._train_loader)
-            except StopIteration:
-                self._train_loader = iter(self._train_dataloader)
-                batch = next(self._train_loader)
+            batch = next(self.ds)
             total_sample_time += timeit.default_timer() - tic
 
             self._learner_key = jrandom.fold_in(

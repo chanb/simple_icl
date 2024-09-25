@@ -115,12 +115,16 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += "#SBATCH --time={}\n".format(exp_config["run_time"])
 
     if exp_name.startswith("omniglot"):
-        sbatch_content += "#SBATCH --cpus-per-task=4\n"
+        sbatch_content += "#SBATCH --cpus-per-task=6\n"
         sbatch_content += "#SBATCH --gres=gpu:1\n"
         sbatch_content += "#SBATCH --mem=6G\n"
     else:
         sbatch_content += "#SBATCH --cpus-per-task=1\n"
-        sbatch_content += "#SBATCH --mem=3G\n"
+
+        if exp_name.startswith("synthetic-transformer-num_relevant_contexts"):
+            sbatch_content += "#SBATCH --mem=6G\n"
+        else:
+            sbatch_content += "#SBATCH --mem=3G\n"
 
     sbatch_content += "#SBATCH --array=1-{}\n".format(num_runs)
     sbatch_content += "#SBATCH --output={}/%j.out\n".format(
@@ -148,12 +152,12 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += 'echo "Starting run at: `date`"\n'
 
     if exp_name.startswith("omniglot"):
-        sbatch_content += "mkdir $SLURM_TMPDIR/tensorflow_datasets\n"
-        sbatch_content += "tar xf {} -C $SLURM_TMPDIR/tensorflow_datasets\n".format(
-            os.path.join(HOME_DIR, "tensorflow_datasets")
-        )
+        sbatch_content += "tar xf $HOME/torch_datasets.tar -C $SLURM_TMPDIR\n"
+        sbatch_content += "XLA_PYTHON_CLIENT_MEM_FRACTION=0.9 python3 {}/src/main.py \\\n".format(REPO_PATH)
+        sbatch_content += "  --device=gpu:0 \\\n"
+    else:
+        sbatch_content += "python3 {}/src/main.py \\\n".format(REPO_PATH)
 
-    sbatch_content += "python3 {}/src/main.py \\\n".format(REPO_PATH)
     sbatch_content += "  --config_path=${config_path} \n"
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 

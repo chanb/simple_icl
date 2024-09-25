@@ -7,6 +7,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 import json
+import numpy as np
 
 from itertools import product
 
@@ -18,7 +19,9 @@ from local_utils.constants import (
     REPO_PATH,
 )
 
-NUM_PARALLEL = 10
+NUM_GPUS = 4
+# NUM_PARALLEL = NUM_GPUS if NUM_GPUS > 0 else 10
+NUM_PARALLEL = 8
 
 sbatch_dir = "./sbatch_scripts"
 os.makedirs(sbatch_dir, exist_ok=True)
@@ -60,7 +63,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content = ""
     sbatch_content += "#!/bin/bash\n"
     sbatch_content += "source {}/.venv/bin/activate\n".format(HOME_DIR)
-    for seed in range(exp_config["num_seeds"]):
+    for seed in np.arange(exp_config["num_seeds"]) + 1:
+        seed = int(seed)
         for variant_config in agg(*variant_values):
             variant_name = "-".join(
                 [
@@ -126,7 +130,11 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
             num_runs += 1
 
-            sbatch_content += "python3 {}/src/main.py \\\n".format(REPO_PATH)
+            if exp_name.startswith("omniglot"):
+                sbatch_content += "XLA_PYTHON_CLIENT_MEM_FRACTION=0.45 python3 {}/src/main.py \\\n".format(REPO_PATH)
+                sbatch_content += "  --device=gpu:{} \\\n".format(num_runs % NUM_GPUS)
+            else:
+                sbatch_content += "python3 {}/src/main.py \\\n".format(REPO_PATH)
             sbatch_content += "  --config_path={} &\n".format(
                 curr_config_path
             )

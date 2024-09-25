@@ -3,13 +3,13 @@
         "save_path": "<TO_FILL>",
         "experiment_name": "<TO_FILL>",
         "log_interval": 50,
-        "checkpoint_interval": 100
+        "checkpoint_interval": 2500
     },
     "model_config": {
         "architecture": "InContextSupervisedTransformer",
         "model_kwargs": {
             "output_dim": 1623,
-            "num_contexts": 8,
+            "num_contexts": 2,
             "num_blocks": 2,
             "num_heads": 1,
             "embed_dim": 64,
@@ -34,23 +34,25 @@
     },
     "dataset_name": "omniglot",
     "dataset_kwargs": {
-        "task_name": "bursty",
-        "task_config": {
-            "exemplars": "single",
-            "noise_scale": 0.1
-        },
-        "sequence_length": 9,
-        "p_bursty": 0.5,
-        "bursty_shots": 3,
-        "ways": 2
+        "dataset_size": "<TO_FILL>",
+        "num_high_prob_classes": 20,
+        "num_low_prob_classes": 1603,
+        "p_high": 0.9,
+        "p_relevant_context": "<TO_FILL>",
+        "train": true,
+        "num_contexts": 2,
+        "input_noise_std": "<TO_FILL>",
+        "label_noise": 0.0,
+        "num_relevant_contexts": null,
+        "exemplar": "single"
     },
     "shuffle_buffer_size": 100,
-    "num_workers": -1,
+    "num_workers": 6,
     "batch_size": 32,
-    "num_epochs": 50000,
+    "num_epochs": 250000,
     "num_updates_per_epoch": 1,
     "seeds": {
-        "learner_seed": 46,
-        "data_seed": 46
+        "learner_seed": "<TO_FILL>",
+        "data_seed": "<TO_FILL>"
     }
 }

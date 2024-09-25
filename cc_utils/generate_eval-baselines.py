@@ -27,6 +27,14 @@ for exp_name, exp_config in EXPERIMENTS.items():
     num_runs = 0
     dat_content = ""
 
+    p_relevant_contexts = []
+    for variant in os.listdir(result_dir):
+        if "p_relevant_context_0.0" in variant or "p_relevant_context_1.0" in variant:
+            continue
+
+        p_relevant_contexts.append(float(variant.split("p_relevant_context_")[1].split("-")[0]))
+
+    p_relevant_contexts = list(set(p_relevant_contexts))
     for variant in os.listdir(result_dir):
         learner_path = os.path.join(result_dir, variant)
 

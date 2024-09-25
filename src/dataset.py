@@ -6,10 +6,11 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
-from gymnasium import spaces
+from prefetch_generator import BackgroundGenerator
 from types import SimpleNamespace
 from typing import Any
 
+import jax
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -135,84 +136,53 @@ def get_omniglot_seq_generator(
     dataset_kwargs: SimpleNamespace,
     seed: int,
 ):
-    task_name = dataset_kwargs.task_name
-    task_config = dataset_kwargs.task_config
-
-    data_generator_factory = omniglot.SeqGenerator(
-        omniglot.OmniglotDatasetForSampling(
-            omniglot_split="all",
-            exemplars=task_config.exemplars,
-            augment_images=False,
-        ),
-        n_rare_classes=1603,  # 1623 - 20
-        n_common_classes=10,
-        n_holdout_classes=10,
-        zipf_exponent=0.0,
-        use_zipf_for_common_rare=False,
-        noise_scale=task_config.noise_scale,
-        preserve_ordering_every_n=None,
-        random_seed=seed,
+    task = omniglot.Omniglot(
+        dataset_kwargs.dataset_size,
+        dataset_kwargs.num_contexts,
+        dataset_kwargs.num_high_prob_classes,
+        dataset_kwargs.num_low_prob_classes,
+        dataset_kwargs.p_high,
+        dataset_kwargs.p_relevant_context,
+        seed,
+        dataset_kwargs.train,
+        getattr(dataset_kwargs, "conditioning", "none"),
+        getattr(dataset_kwargs, "input_noise_std", 0.0),
+        getattr(dataset_kwargs, "label_noise", 0.0),
+        getattr(dataset_kwargs, "num_relevant_contexts", None),
+        getattr(dataset_kwargs, "exemplar", "single"),
     )
 
-    if task_name == "bursty":
-        seq_generator = data_generator_factory.get_bursty_seq
-
-        seq_config = (
-            dataset_kwargs.sequence_length,
-            dataset_kwargs.bursty_shots,
-            dataset_kwargs.ways,
-            dataset_kwargs.p_bursty,
-            0.0,
-            1.0,
-            "zipfian",
-            "ordered",
-            "ordered",
-            False,
-            False,
-        )
-    elif task_name == "fewshot_holdout":
-        seq_generator = data_generator_factory.get_fewshot_seq
-        seq_config = (
-            "holdout",
-            dataset_kwargs.fs_shots,
-            dataset_kwargs.ways,
-            "unfixed",
-            False,
-            False,
-        )
-    elif task_name == "no_support":
-        seq_generator = data_generator_factory.get_no_support_seq
-        all_unique = False
-        seq_config = (
-            "zipfian",
-            dataset_kwargs.sequence_length,
-            all_unique,
-            "ordered",
-            False,
-        )
-    else:
-        raise NotImplementedError
-
-    example_shape = (dataset_kwargs.sequence_length, 105, 105, 1)
-    example_dtype = tf.dtypes.float32
+    num_classes = (
+        dataset_kwargs.num_low_prob_classes + dataset_kwargs.num_high_prob_classes
+    )
 
     dataset = tf.data.Dataset.from_generator(
-        seq_generator,
-        args=seq_config,
+        task.get_sequences,
+        args=(getattr(dataset_kwargs, "flip_label", 0),),
         output_signature={
-            "example": tf.TensorSpec(shape=example_shape, dtype=example_dtype),
-            "label": tf.TensorSpec(
-                shape=(dataset_kwargs.sequence_length,), dtype=tf.dtypes.int32
+            "example": tf.TensorSpec(
+                shape=(
+                    dataset_kwargs.num_contexts + 1,
+                    omniglot.IMAGE_SIZE,
+                    omniglot.IMAGE_SIZE,
+                    1,
+                ),
+                dtype=tf.dtypes.float32,
             ),
-            "is_rare": tf.TensorSpec(
-                shape=(dataset_kwargs.sequence_length,), dtype=tf.dtypes.int32
+            "label": tf.TensorSpec(
+                shape=(dataset_kwargs.num_contexts + 1, num_classes),
+                dtype=tf.dtypes.int32,
+            ),
+            "label_dist": tf.TensorSpec(
+                shape=(num_classes,),
+                dtype=tf.dtypes.float32,
             ),
         },
     )
     return TFDataset(
         dataset,
-        spaces.Box(low=0, high=255, shape=(105, 105, 1), dtype=int),
-        spaces.Discrete(omniglot.N_CHARACTER_CLASSES),
+        task.input_space,
+        task.output_space,
     )
 
 
@@ -298,25 +268,78 @@ def prepare_seqs_for_icl(ds, num_classes: int):
     return ds.flat_map(_convert_dict)
 
 
+def get_iter(data_loader):
+    loader = iter(data_loader)
+    while True:
+        try:
+            batch = next(loader)
+        except StopIteration:
+            loader = iter(data_loader)
+            batch = next(loader)
+
+        for k, v in batch.items():
+            if hasattr(v, "numpy"):
+                batch[k] = v.numpy()
+        yield jax.device_put(batch)
+
+
 def get_data_loader(config: SimpleNamespace) -> Any:
     dataset_name = config.dataset_name
     dataset_kwargs = config.dataset_kwargs
 
-    if dataset_name == "streamblock":
-        seq_generator = get_streamblock_seq_generator
-    elif dataset_name == "omniglot":
-        seq_generator = get_omniglot_seq_generator
-    elif dataset_name == "synthetic":
-        seq_generator = get_synthetic_seq_generator
+    num_workers = getattr(config, "num_workers", 0)
+    if dataset_name == "omniglot":
+        from torch.utils.data import DataLoader
 
-    dataset = seq_generator(dataset_kwargs, config.seeds.data_seed)
-    ds_seqs = dataset.dataset
+        batch_size = config.batch_size
+        shuffle = True
+        drop_last = True
+        dataset = omniglot.Omniglot(
+            dataset_kwargs.dataset_size,
+            dataset_kwargs.num_contexts,
+            dataset_kwargs.num_high_prob_classes,
+            dataset_kwargs.num_low_prob_classes,
+            dataset_kwargs.p_high,
+            dataset_kwargs.p_relevant_context,
+            config.seeds.data_seed,
+            dataset_kwargs.train,
+            getattr(dataset_kwargs, "conditioning", "none"),
+            getattr(dataset_kwargs, "input_noise_std", 0.0),
+            getattr(dataset_kwargs, "label_noise", 0.0),
+            getattr(dataset_kwargs, "num_relevant_contexts", None),
+            getattr(dataset_kwargs, "exemplar", "single"),
+            getattr(dataset_kwargs, "flip_label", False),
+        )
 
-    shuffle_buffer_size = config.shuffle_buffer_size
-    ds = ds_seqs.batch(config.batch_size).prefetch(config.num_workers)
-    ds = prepare_seqs_for_icl(
-        ds,
-        dataset.output_space.n,
-    )
-    ds = ds.repeat().shuffle(buffer_size=shuffle_buffer_size)
-    return tfds.as_numpy(ds), dataset
+        loader = DataLoader(
+            dataset,
+            batch_size=batch_size,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            num_workers=num_workers,
+        )
+
+    else:
+        if dataset_name == "streamblock":
+            seq_generator = get_streamblock_seq_generator
+        elif dataset_name == "omniglot":
+            seq_generator = get_omniglot_seq_generator
+        elif dataset_name == "synthetic":
+            seq_generator = get_synthetic_seq_generator
+
+        dataset = seq_generator(dataset_kwargs, config.seeds.data_seed)
+        ds_seqs = dataset.dataset
+
+        shuffle_buffer_size = config.shuffle_buffer_size
+        ds = ds_seqs.batch(config.batch_size).prefetch(num_workers)
+        ds = prepare_seqs_for_icl(
+            ds,
+            dataset.output_space.n,
+        )
+        ds = ds.repeat().shuffle(buffer_size=shuffle_buffer_size)
+        loader = tfds.as_numpy(ds)
+
+    loader = get_iter(loader)
+    loader = BackgroundGenerator(loader, max_prefetch=num_workers)
+
+    return loader, dataset
