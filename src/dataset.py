@@ -287,13 +287,13 @@ def get_data_loader(config: SimpleNamespace) -> Any:
     dataset_name = config.dataset_name
     dataset_kwargs = config.dataset_kwargs
 
+    num_workers = getattr(config, "num_workers", 0)
     if dataset_name == "omniglot":
         from torch.utils.data import DataLoader
 
         batch_size = config.batch_size
         shuffle = True
         drop_last = True
-        num_workers = getattr(config, "num_workers", 0)
         dataset = omniglot.Omniglot(
             dataset_kwargs.dataset_size,
             dataset_kwargs.num_contexts,
@@ -331,7 +331,7 @@ def get_data_loader(config: SimpleNamespace) -> Any:
         ds_seqs = dataset.dataset
 
         shuffle_buffer_size = config.shuffle_buffer_size
-        ds = ds_seqs.batch(config.batch_size).prefetch(config.num_workers)
+        ds = ds_seqs.batch(config.batch_size).prefetch(num_workers)
         ds = prepare_seqs_for_icl(
             ds,
             dataset.output_space.n,

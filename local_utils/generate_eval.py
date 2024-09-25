@@ -1,3 +1,4 @@
+# FOR TRANSFORMER EVAL
 import inspect
 import os
 import sys
@@ -31,6 +32,9 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += "source {}/.venv/bin/activate\n".format(HOME_DIR)
     for variant in os.listdir(result_dir):
         learner_path = os.path.join(result_dir, variant)
+
+        if "p_relevant_context_0.0" in variant or "p_relevant_context_1.0" in variant:
+            continue
 
         num_runs += 1
 
