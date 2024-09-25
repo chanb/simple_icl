@@ -160,9 +160,12 @@ class Synthetic:
                     no_context_from_query_idxes = np.where(
                         context_from_query[relevant_context_idxes] > 0
                     )[0]
-            self.targets = np.random.default_rng(self.seed).permuted(
-                self.targets, axis=-1
-            )
+                self.targets[relevant_context_idxes, :-1] = np.random.default_rng(self.seed).permuted(
+                    self.targets[relevant_context_idxes, :-1], axis=-1
+                )
+                assert np.all(np.sum(
+                    self.targets[relevant_context_idxes, :-1] == self.targets[relevant_context_idxes, [-1]][..., None], axis=-1
+                ) == self.num_relevant_contexts)
 
         irrelevant_context_idxes = np.where(relevant_context_mask == 0)[0]
         has_context_from_query_idxes = np.where(
