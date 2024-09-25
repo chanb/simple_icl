@@ -138,21 +138,22 @@ class Omniglot:
                 context_from_query[relevant_context_idxes] == 0
             )[0]
 
-            while len(no_context_from_query_idxes) > 0:
-                self.targets[
-                    relevant_context_idxes[no_context_from_query_idxes], :-1
-                ] = rng.choice(
-                    self.num_classes,
-                    size=(len(no_context_from_query_idxes), self.num_contexts),
-                    p=weights,
-                )
-                context_from_query = np.sum(
-                    self.targets[:, :-1] == self.targets[:, [-1]], axis=-1
-                )
+            self.targets[relevant_context_idxes[no_context_from_query_idxes], 0] = self.targets[
+                relevant_context_idxes[no_context_from_query_idxes],
+                -1
+            ]
+            self.targets[relevant_context_idxes, :-1] = np.random.default_rng(self.seed).permuted(
+                self.targets[relevant_context_idxes, :-1], axis=-1
+            )
 
-                no_context_from_query_idxes = np.where(
-                    context_from_query[relevant_context_idxes] == 0
-                )[0]
+            context_from_query = np.sum(
+                self.targets[:, :-1] == self.targets[:, [-1]], axis=-1
+            )
+
+            no_context_from_query_idxes = np.where(
+                context_from_query[relevant_context_idxes] == 0
+            )[0]
+            assert len(no_context_from_query_idxes) == 0
 
         else:
             self.targets[relevant_context_idxes, : self.num_relevant_contexts] = (
@@ -185,9 +186,12 @@ class Omniglot:
                     no_context_from_query_idxes = np.where(
                         context_from_query[relevant_context_idxes] > 0
                     )[0]
-            self.targets = np.random.default_rng(self.seed).permuted(
-                self.targets, axis=-1
-            )
+                self.targets[relevant_context_idxes, :-1] = np.random.default_rng(self.seed).permuted(
+                    self.targets[relevant_context_idxes, :-1], axis=-1
+                )
+                assert np.all(np.sum(
+                    self.targets[relevant_context_idxes, :-1] == self.targets[relevant_context_idxes, [-1]][..., None], axis=-1
+                ) == self.num_relevant_contexts)
 
         irrelevant_context_idxes = np.where(relevant_context_mask == 0)[0]
         has_context_from_query_idxes = np.where(
