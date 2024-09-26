@@ -30,7 +30,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     for variant in os.listdir(result_dir):
         evaluation_file = os.path.join(result_dir, variant)
 
-        if not os.path.isdir(evaluation_file):
+        if os.path.isdir(evaluation_file):
             continue
 
         num_runs += 1

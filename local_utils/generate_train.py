@@ -20,7 +20,7 @@ from local_utils.constants import (
 )
 
 NUM_GPUS = 1
-AVAIL_GPUS = [2]
+AVAIL_GPUS = [1]
 # NUM_PARALLEL = NUM_GPUS if NUM_GPUS > 0 else 10
 NUM_PARALLEL = 2
 

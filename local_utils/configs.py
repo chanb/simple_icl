@@ -8,12 +8,12 @@
 #     "synthetic-transformer-p_relevant": {},
 # }
 EXPERIMENTS = {
-    "omniglot-input_noise-larger_bs": {
+    "omniglot-input_noise-context_len_4": {
         "num_seeds": 1,
         "variants": [
             {
                 "key": "dataset_size",
-                "values": [1000000]
+                "values": [100000, 1000000]
             },
             {
                 "key": "p_relevant_context",
@@ -22,7 +22,7 @@ EXPERIMENTS = {
             },
             {
                 "key": "input_noise_std",
-                "values": [1.0]
+                "values": [0.1, 1.0]
             },
         ]
     },
