@@ -3,7 +3,7 @@
 # Section 5.2
 EXPERIMENTS = {
     "omniglot-input_noise": {
-        "run_time": "02:55:00",
+        "run_time": "11:59:00",
         "num_seeds": 3,
         "variants": [
             {
@@ -17,7 +17,83 @@ EXPERIMENTS = {
             },
             {
                 "key": "input_noise_std",
-                "values": [0.0, 0.1, 0.2]
+                "values": [0.0, 0.1, 1.0]
+            }
+        ]
+    },
+    "omniglot-num_contexts": {
+        "run_time": "11:59:00",
+        "num_seeds": 3,
+        "variants": [
+            {
+                # NOTE: Need to rerun all because increasing number of gradient steps to 100k
+                "key": "dataset_size",
+                "values": [10 ** 4, 10 ** 5, 10 ** 6]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+            {
+                "key": "num_contexts",
+                "values": [2, 4]
+            }
+        ]
+    },
+    "omniglot-num_relevant_contexts": {
+        "run_time": "11:59:00",
+        "num_seeds": 3,
+        "variants": [
+            {
+                # NOTE: Need to rerun all because increasing number of gradient steps to 100k
+                "key": "dataset_size",
+                "values": [10 ** 4, 10 ** 5, 10 ** 6]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+            {
+                "key": "num_relevant_contexts",
+                "values": [1, 2, 3, 4]
+            }
+        ]
+    },
+    "omniglot-p_high": {
+        "run_time": "11:59:00",
+        "num_seeds": 3,
+        "variants": [
+            {
+                # NOTE: Need to rerun all because increasing number of gradient steps to 100k
+                "key": "dataset_size",
+                "values": [10 ** 4, 10 ** 5, 10 ** 6]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+            {
+                "key": "p_high",
+                "values": [0.5, 0.99]
+            }
+        ]
+    },
+    "omniglot-p_relevant": {
+        "run_time": "11:59:00",
+        "num_seeds": 3,
+        "variants": [
+            {
+                # NOTE: Need to rerun all because increasing number of gradient steps to 100k
+                "key": "dataset_size",
+                "values": [10 ** 4, 10 ** 5, 10 ** 6]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.0, 0.9, 1.0]
+            },
+            {
+                "key": "p_relevant_context",
+                "values": [0.5, 0.99]
             }
         ]
     },
