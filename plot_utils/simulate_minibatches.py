@@ -23,18 +23,22 @@ import seaborn as sns
 import pandas as pd
 import timeit
 
-repo_path = "/Users/chanb/research/ualberta/icl/simple_icl"
-results_dir = "/Users/chanb/research/ualberta/icl/cc_results/paper_experiments/evaluation_results"
-templates_dir = os.path.join(repo_path, "cc_utils", "templates")
-out_dir = os.path.join(os.path.dirname(results_dir), "training_info")
-os.makedirs(out_dir, exist_ok=True)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--evaluation_file", type=str, required=True)
+parser.add_argument("--repo_path", type=str, required=True)
+parser.add_argument("--results_dir", type=str, required=True)
 args = parser.parse_args()
 
 evaluation_file = args.evaluation_file
+repo_path = args.repo_path
+results_dir = args.results_dir
+templates_dir = os.path.join(repo_path, "cc_utils", "templates")
+out_dir = os.path.join(os.path.dirname(results_dir), "training_info")
+
 assert os.path.dirname(evaluation_file) != out_dir
+
+os.makedirs(out_dir, exist_ok=True)
 
 variant_name = os.path.basename(os.path.dirname(evaluation_file))
 run_name = os.path.basename(evaluation_file)
@@ -50,7 +54,7 @@ for key_val_pair in hyperparameters:
     if key == "seed":
         config_dict["seeds"]["data_seed"] = int(value)
     else:
-        config_dict["dataset_kwargs"][key] = int(value) if value.is_integer() else float(value)
+        config_dict["dataset_kwargs"][key] = int(value) if value.isdigit() else float(value)
 
 config = parse_dict(config_dict)
 loader, dataset = get_data_loader(config)
