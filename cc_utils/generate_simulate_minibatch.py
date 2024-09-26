@@ -79,7 +79,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
     sbatch_content += "  --evaluation_file=${evaluation_file} \\\n"
     sbatch_content += "  --repo_path={} \\\n".format(REPO_PATH)
-    sbatch_content += "  --results_dir={} \n".format(os.path.join(EVAL_DIR, exp_name))
+    sbatch_content += "  --results_dir={} \n".format(os.path.join(EVAL_DIR))
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 
     script_path = os.path.join(sbatch_dir, f"run_all-simulate_minibatch-{exp_name}.sh")

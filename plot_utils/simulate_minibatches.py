@@ -33,15 +33,16 @@ args = parser.parse_args()
 evaluation_file = args.evaluation_file
 repo_path = args.repo_path
 results_dir = args.results_dir
+
+variant_name = os.path.basename(os.path.dirname(evaluation_file))
+run_name = os.path.basename(evaluation_file)
+
 templates_dir = os.path.join(repo_path, "cc_utils", "templates")
-out_dir = os.path.join(os.path.dirname(results_dir), "training_info")
+out_dir = os.path.join(os.path.dirname(results_dir), "training_info", variant_name)
 
 assert os.path.dirname(evaluation_file) != out_dir
 
 os.makedirs(out_dir, exist_ok=True)
-
-variant_name = os.path.basename(os.path.dirname(evaluation_file))
-run_name = os.path.basename(evaluation_file)
 
 template_path = os.path.join(templates_dir, "{}.json".format(variant_name))
 config_dict = json.load(open(template_path))
