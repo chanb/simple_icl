@@ -9,7 +9,7 @@ from src.constants import *
 from src.dataset import get_data_loader
 from src.utils import parse_dict, load_config, iterate_models, set_seed
 
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 import _pickle as pickle
 import argparse
@@ -82,7 +82,7 @@ for epoch_i in tqdm(range(num_epochs)):
 pickle.dump(
     batches,
     open(
-        os.path.join(out_dir, evaluation_file),
+        os.path.join(out_dir, run_name),
         "wb"
     )
 )
