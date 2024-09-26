@@ -43,9 +43,10 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
         for p_relevant_context in p_relevant_contexts:
             num_runs += 1
-            dat_content += "export learner_path={} p_relevant_context={} \n".format(
+            dat_content += "export learner_path={} p_relevant_context={} save_path={} \n".format(
                 learner_path,
                 p_relevant_context,
+                os.path.join(EVAL_DIR, exp_name, "p_relevant_context_{}".format(p_relevant_context))
             )
 
     with open(os.path.join(CONFIG_DIR, "baselines-{}.dat".format(exp_name)), "w+") as f:
@@ -59,7 +60,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     if exp_name.startswith("omniglot"):
         sbatch_content += "#SBATCH --cpus-per-task=6\n"
         sbatch_content += "#SBATCH --gres=gpu:1\n"
-        sbatch_content += "#SBATCH --mem=12G\n"
+        sbatch_content += "#SBATCH --mem=24G\n"
     else:
         sbatch_content += "#SBATCH --cpus-per-task=1\n"
         sbatch_content += "#SBATCH --mem=3G\n"
@@ -86,7 +87,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += "echo ${SLURM_ARRAY_TASK_ID}\n"
     sbatch_content += 'echo "Current working directory is `pwd`"\n'
     sbatch_content += 'echo "Running on hostname `hostname`"\n'
-    sbatch_content += "echo ${learner_path}\n"
+    sbatch_content += "echo ${learner_path} ${p_relevant_context} ${save_path}\n"
     sbatch_content += 'echo "Starting run at: `date`"\n'
 
     if exp_name.startswith("omniglot"):
@@ -98,7 +99,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
     sbatch_content += "  --learner_path=${learner_path} \\\n"
     sbatch_content += "  --p_relevant_context=${p_relevant_context} \\\n"
-    sbatch_content += "  --save_path={} &\n".format(os.path.join(EVAL_DIR, exp_name, "p_relevant_context_{}".format(p_relevant_context)))
+    sbatch_content += "  --save_path=${save_path} \n"
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 
     script_path = os.path.join(sbatch_dir, f"run_all-baselines-{exp_name}.sh")
