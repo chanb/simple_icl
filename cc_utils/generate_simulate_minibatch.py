@@ -48,7 +48,6 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
     if exp_name.startswith("omniglot"):
         sbatch_content += "#SBATCH --cpus-per-task=6\n"
-        sbatch_content += "#SBATCH --gres=gpu:1\n"
         sbatch_content += "#SBATCH --mem=12G\n"
     else:
         sbatch_content += "#SBATCH --cpus-per-task=1\n"
