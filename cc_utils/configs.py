@@ -3,12 +3,11 @@
 # Section 5.2
 EXPERIMENTS = {
     "omniglot-input_noise": {
-        "run_time": "11:59:00",
-        "eval_run_time": "1:59:00",
+        "run_time": "02:55:00",
+        "eval_run_time": "02:55:00",
         "num_seeds": 3,
         "variants": [
             {
-                # NOTE: Need to rerun all because increasing number of gradient steps to 100k
                 "key": "dataset_size",
                 "values": [10 ** 4, 10 ** 5, 10 ** 6]
             },
@@ -23,12 +22,11 @@ EXPERIMENTS = {
         ]
     },
     "omniglot-num_contexts": {
-        "run_time": "11:59:00",
-        "eval_run_time": "1:59:00",
+        "run_time": "02:55:00",
+        "eval_run_time": "02:55:00",
         "num_seeds": 3,
         "variants": [
             {
-                # NOTE: Need to rerun all because increasing number of gradient steps to 100k
                 "key": "dataset_size",
                 "values": [10 ** 4, 10 ** 5, 10 ** 6]
             },
@@ -43,12 +41,11 @@ EXPERIMENTS = {
         ]
     },
     "omniglot-num_relevant_contexts": {
-        "run_time": "11:59:00",
-        "eval_run_time": "1:59:00",
+        "run_time": "02:55:00",
+        "eval_run_time": "02:55:00",
         "num_seeds": 3,
         "variants": [
             {
-                # NOTE: Need to rerun all because increasing number of gradient steps to 100k
                 "key": "dataset_size",
                 "values": [10 ** 4, 10 ** 5, 10 ** 6]
             },
@@ -63,12 +60,11 @@ EXPERIMENTS = {
         ]
     },
     "omniglot-p_high": {
-        "run_time": "11:59:00",
-        "eval_run_time": "1:59:00",
+        "run_time": "02:55:00",
+        "eval_run_time": "02:55:00",
         "num_seeds": 3,
         "variants": [
             {
-                # NOTE: Need to rerun all because increasing number of gradient steps to 100k
                 "key": "dataset_size",
                 "values": [10 ** 4, 10 ** 5, 10 ** 6]
             },
@@ -83,8 +79,8 @@ EXPERIMENTS = {
         ]
     },
     "omniglot-p_relevant": {
-        "run_time": "11:59:00",
-        "eval_run_time": "1:59:00",
+        "run_time": "02:55:00",
+        "eval_run_time": "02:55:00",
         "num_seeds": 3,
         "variants": [
             {
@@ -94,11 +90,7 @@ EXPERIMENTS = {
             },
             {
                 "key": "p_relevant_context",
-                "values": [0.0, 0.9, 1.0]
-            },
-            {
-                "key": "p_relevant_context",
-                "values": [0.5, 0.99]
+                "values": [0.0, 0.5, 0.9, 0.99, 1.0]
             }
         ]
     },
