@@ -69,7 +69,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += "echo ${SLURM_ARRAY_TASK_ID}\n"
     sbatch_content += 'echo "Current working directory is `pwd`"\n'
     sbatch_content += 'echo "Running on hostname `hostname`"\n'
-    sbatch_content += "echo ${learner_path}\n"
+    sbatch_content += "echo ${evaluation_file}\n"
     sbatch_content += 'echo "Starting run at: `date`"\n'
 
     if exp_name.startswith("omniglot"):
