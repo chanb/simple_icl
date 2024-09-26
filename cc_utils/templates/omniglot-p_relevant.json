@@ -41,7 +41,7 @@
         "p_relevant_context": "<TO_FILL>",
         "train": true,
         "num_contexts": 2,
-        "input_noise_std": "<TO_FILL>",
+        "input_noise_std": 0.1,
         "label_noise": 0.0,
         "num_relevant_contexts": null,
         "exemplar": "single"
