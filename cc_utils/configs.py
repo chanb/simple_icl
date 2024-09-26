@@ -4,6 +4,7 @@
 EXPERIMENTS = {
     "omniglot-input_noise": {
         "run_time": "11:59:00",
+        "eval_run_time": "1:59:00",
         "num_seeds": 3,
         "variants": [
             {
@@ -23,6 +24,7 @@ EXPERIMENTS = {
     },
     "omniglot-num_contexts": {
         "run_time": "11:59:00",
+        "eval_run_time": "1:59:00",
         "num_seeds": 3,
         "variants": [
             {
@@ -42,6 +44,7 @@ EXPERIMENTS = {
     },
     "omniglot-num_relevant_contexts": {
         "run_time": "11:59:00",
+        "eval_run_time": "1:59:00",
         "num_seeds": 3,
         "variants": [
             {
@@ -61,6 +64,7 @@ EXPERIMENTS = {
     },
     "omniglot-p_high": {
         "run_time": "11:59:00",
+        "eval_run_time": "1:59:00",
         "num_seeds": 3,
         "variants": [
             {
@@ -80,6 +84,7 @@ EXPERIMENTS = {
     },
     "omniglot-p_relevant": {
         "run_time": "11:59:00",
+        "eval_run_time": "1:59:00",
         "num_seeds": 3,
         "variants": [
             {

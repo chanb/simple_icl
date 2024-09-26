@@ -117,7 +117,11 @@ for exp_name, exp_config in EXPERIMENTS.items():
     if exp_name.startswith("omniglot"):
         sbatch_content += "#SBATCH --cpus-per-task=6\n"
         sbatch_content += "#SBATCH --gres=gpu:1\n"
-        sbatch_content += "#SBATCH --mem=6G\n"
+
+        if exp_name.startswith("omniglot-num_relevant_contexts") or exp_name.startswith("omniglot-num_contexts"):
+            sbatch_content += "#SBATCH --mem=12G\n"
+        else:
+            sbatch_content += "#SBATCH --mem=6G\n"
     else:
         if exp_name.startswith("synthetic-transformer-num_relevant_contexts"):
             sbatch_content += "#SBATCH --cpus-per-task=2\n"
