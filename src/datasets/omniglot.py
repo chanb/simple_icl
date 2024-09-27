@@ -225,9 +225,9 @@ class Omniglot:
 
         offset = 0
         if self.exemplar != "single":
-            offset = rng.randint(0, N_CHARACTER_CLASSES)
+            offset = rng.randint(0, N_EXEMPLARS_PER_CLASS)
         elif self.exemplar == "heldout":
-            offset = N_CHARACTER_CLASSES - 1
+            offset = N_EXEMPLARS_PER_CLASS - 1
 
         idx = target * N_EXEMPLARS_PER_CLASS + offset
         image = (
