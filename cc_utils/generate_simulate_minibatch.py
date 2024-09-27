@@ -44,7 +44,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content = ""
     sbatch_content += "#!/bin/bash\n"
     sbatch_content += "#SBATCH --account={}\n".format(CC_ACCOUNT)
-    sbatch_content += "#SBATCH --time=01:00:00\n"
+    sbatch_content += "#SBATCH --time=02:55:00\n"
 
     if exp_name.startswith("omniglot"):
         sbatch_content += "#SBATCH --cpus-per-task=6\n"
