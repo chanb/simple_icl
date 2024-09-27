@@ -7,21 +7,15 @@ from experiments.utils import *
 
 from src.constants import *
 from src.dataset import get_data_loader
-from src.utils import parse_dict, load_config, iterate_models, set_seed
+from src.utils import parse_dict
 
 from tqdm import tqdm
 
 import _pickle as pickle
 import argparse
 import json
-import math
-import matplotlib.pyplot as plt
-import matplotlib.ticker as plticker
 import numpy as np
 import os
-import seaborn as sns
-import pandas as pd
-import timeit
 
 
 parser = argparse.ArgumentParser()
@@ -61,7 +55,7 @@ config = parse_dict(config_dict)
 loader, dataset = get_data_loader(config)
 
 batch_size = config.batch_size
-checkpoint_interval = config.logging_config.checkpoint_interval
+checkpoint_interval = 1
 num_epochs = config.num_epochs
 num_high_freq_class = config.dataset_kwargs.num_high_prob_classes
 
@@ -72,12 +66,11 @@ for epoch_i in tqdm(range(num_epochs)):
         target = batch["target"]
         labels = np.argmax(target, axis=-1)
 
-        relevant_contexts = np.sum(labels[:, :-1] == labels[:, [-1]], axis=-1) > 0
-        num_relevant_contexts = relevant_contexts = np.sum(labels[:, :-1] == labels[:, [-1]], axis=-1)
+        num_relevant_contexts = np.sum(labels[:, :-1] == labels[:, [-1]], axis=-1)
         high_freq_classes = labels[:, -1] <= num_high_freq_class
         batches.append(dict(
-            num_relevant_contexts=num_relevant_contexts,
-            high_freq_classes=high_freq_classes,
+            num_relevant_contexts=num_relevant_contexts.astype(np.uint8),
+            targets=labels[:, -1].astype(np.uint16),
         ))
 
 pickle.dump(
