@@ -68,3 +68,7 @@ chmod +x sbatch_all_train.sh
 ```
 
 ## Evaluating Results
+Useful for finding files
+```
+find . -name '50000.dill' -not -path '*.terraform*' -printf '%h\n' | sort -u
+```
