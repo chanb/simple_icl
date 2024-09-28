@@ -132,10 +132,11 @@ def get_synthetic_eval_datasets(
     context_len: int,
     num_eval_samples: int,
     p_relevant_context: float = None,
+    heldout: bool = False,
 ):
     configs = dict()
 
-    for flip_label in [1, 0]:
+    if heldout:
         for relevant_context in ["default", "relevant_context", "irrelevant_context"]:
             for conditioning in ["none", "high_prob", "low_prob"]:
                 eval_config_dict = copy.deepcopy(config_dict)
@@ -149,10 +150,30 @@ def get_synthetic_eval_datasets(
                 elif p_relevant_context is not None:
                     eval_config_dict["dataset_kwargs"]["p_relevant_context"] = p_relevant_context
                 eval_config_dict["dataset_kwargs"]["conditioning"] = conditioning
-                eval_config_dict["dataset_kwargs"]["flip_label"] = flip_label
+                eval_config_dict["dataset_kwargs"]["flip_label"] = 1
+                eval_config_dict["dataset_kwargs"]["exemplar"] = "heldout"
 
                 eval_config = parse_dict(eval_config_dict)
-                configs["eval-{}-{}{}".format(relevant_context, conditioning, "-flip_label" if flip_label else "")] = eval_config
+                configs["eval-{}-{}-heldout_input-flipped_label".format(relevant_context, conditioning)] = eval_config
+    else:
+        for flip_label in [1, 0]:
+            for relevant_context in ["default", "relevant_context", "irrelevant_context"]:
+                for conditioning in ["none", "high_prob", "low_prob"]:
+                    eval_config_dict = copy.deepcopy(config_dict)
+
+                    eval_config_dict["dataset_kwargs"]["dataset_size"] = num_eval_samples * 5
+                    eval_config_dict["dataset_kwargs"]["train"] = False
+                    if relevant_context == "relevant_context":
+                        eval_config_dict["dataset_kwargs"]["p_relevant_context"] = 1.0
+                    elif relevant_context == "irrelevant_context":
+                        eval_config_dict["dataset_kwargs"]["p_relevant_context"] = 0.0
+                    elif p_relevant_context is not None:
+                        eval_config_dict["dataset_kwargs"]["p_relevant_context"] = p_relevant_context
+                    eval_config_dict["dataset_kwargs"]["conditioning"] = conditioning
+                    eval_config_dict["dataset_kwargs"]["flip_label"] = flip_label
+
+                    eval_config = parse_dict(eval_config_dict)
+                    configs["eval-{}-{}{}".format(relevant_context, conditioning, "-flip_label" if flip_label else "")] = eval_config
 
     return {
         eval_name: get_data_loader(config) for eval_name, config in configs.items()
@@ -207,6 +228,7 @@ def main(args: SimpleNamespace):
             context_len,
             num_eval_samples,
             p_relevant_context,
+            True,
         )
     elif config.dataset_name == "synthetic":
         datasets, dataset_configs = get_synthetic_eval_datasets(
@@ -215,6 +237,7 @@ def main(args: SimpleNamespace):
             context_len,
             num_eval_samples,
             p_relevant_context,
+            False,
         )
 
     train_ds, train_dataset = get_data_loader(

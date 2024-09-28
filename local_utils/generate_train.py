@@ -19,9 +19,10 @@ from local_utils.constants import (
     REPO_PATH,
 )
 
-NUM_GPUS = 4
+NUM_GPUS = 1
+AVAIL_GPUS = [1]
 # NUM_PARALLEL = NUM_GPUS if NUM_GPUS > 0 else 10
-NUM_PARALLEL = 8
+NUM_PARALLEL = 2
 
 sbatch_dir = "./sbatch_scripts"
 os.makedirs(sbatch_dir, exist_ok=True)
@@ -132,7 +133,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
             if exp_name.startswith("omniglot"):
                 sbatch_content += "XLA_PYTHON_CLIENT_MEM_FRACTION=0.45 python3 {}/src/main.py \\\n".format(REPO_PATH)
-                sbatch_content += "  --device=gpu:{} \\\n".format(num_runs % NUM_GPUS)
+                sbatch_content += "  --device=gpu:{} \\\n".format(AVAIL_GPUS[num_runs % NUM_GPUS])
             else:
                 sbatch_content += "python3 {}/src/main.py \\\n".format(REPO_PATH)
             sbatch_content += "  --config_path={} &\n".format(

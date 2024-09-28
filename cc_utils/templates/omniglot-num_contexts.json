@@ -3,13 +3,13 @@
         "save_path": "<TO_FILL>",
         "experiment_name": "<TO_FILL>",
         "log_interval": 50,
-        "checkpoint_interval": 5000
+        "checkpoint_interval": 2500
     },
     "model_config": {
         "architecture": "InContextSupervisedTransformer",
         "model_kwargs": {
             "output_dim": 1623,
-            "num_contexts": 1,
+            "num_contexts": "<TO_FILL>",
             "num_blocks": 2,
             "num_heads": 1,
             "embed_dim": 64,
@@ -38,18 +38,18 @@
         "num_high_prob_classes": 20,
         "num_low_prob_classes": 1603,
         "p_high": 0.9,
-        "p_relevant_context": "<TO_FILL>",
+        "p_relevant_context": 0.9,
         "train": true,
-        "num_contexts": 1,
-        "input_noise_std": "<TO_FILL>",
+        "num_contexts": "<TO_FILL>",
+        "input_noise_std": 0.1,
         "label_noise": 0.0,
         "num_relevant_contexts": null,
         "exemplar": "single"
     },
     "shuffle_buffer_size": 100,
-    "num_workers": 4,
+    "num_workers": 6,
     "batch_size": 32,
-    "num_epochs": 500000,
+    "num_epochs": 100000,
     "num_updates_per_epoch": 1,
     "seeds": {
         "learner_seed": "<TO_FILL>",
