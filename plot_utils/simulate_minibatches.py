@@ -67,7 +67,6 @@ for epoch_i in tqdm(range(num_epochs)):
         labels = np.argmax(target, axis=-1)
 
         num_relevant_contexts = np.sum(labels[:, :-1] == labels[:, [-1]], axis=-1)
-        high_freq_classes = labels[:, -1] <= num_high_freq_class
         batches.append(dict(
             num_relevant_contexts=num_relevant_contexts.astype(np.uint8),
             targets=labels[:, -1].astype(np.uint16),
