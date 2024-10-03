@@ -117,8 +117,15 @@ for exp_name, exp_config in EXPERIMENTS.items():
                             if not learner_path.startswith(variant_name):
                                 continue
 
+                        model_dir = os.path.join(
+                            result_dir, learner_path, "models"
+                        )
+                        all_steps = [
+                            filename
+                            for filename in sorted(os.listdir(model_dir))
+                        ]
                         config_dict["model_config"]["model_kwargs"][load_key] = os.path.join(
-                            result_dir, learner_path, "models", "50000.dill"
+                            model_dir, "{}.dill".format(all_steps[-1])
                         )
                         break
                     else:
