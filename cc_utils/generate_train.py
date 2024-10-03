@@ -95,6 +95,39 @@ for exp_name, exp_config in EXPERIMENTS.items():
                         "output_dim",
                         config_dict["dataset_kwargs"]["num_high_prob_classes"] + config_dict["dataset_kwargs"]["num_low_prob_classes"]
                     )
+            
+            if exp_name == "synthetic-alpha":
+                for (load_key, load_name) in (
+                    ("load_iw", "synthetic-iw_predictor"),
+                    ("load_ic", "synthetic-ic_predictor")
+                ):
+                    result_dir = os.path.join(LOG_DIR, load_name)
+                    if not os.path.isdir(result_dir):
+                        print("cannot find {} to load".format(load_name))
+                        continue
+
+                    for learner_path in os.listdir(result_dir):
+                        if load_key == "load_iw":
+                            include = True
+                            for curr_attr in variant_name.split("-"):
+                                if "p_relevant_context" in curr_attr:
+                                    continue
+
+                                if curr_attr not in learner_path:
+                                    include = False
+                                    break
+                            if not include:
+                                continue
+                        else:
+                            if not learner_path.startswith(variant_name):
+                                continue
+
+                        config_dict["model_config"]["model_kwargs"][load_key] = os.path.join(
+                            result_dir, learner_path, "models", "50000.dill"
+                        )
+                        break
+                    else:
+                        print("cannot find {} to load".format(load_name))
 
             json.dump(
                 config_dict,
