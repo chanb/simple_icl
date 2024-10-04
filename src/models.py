@@ -171,7 +171,7 @@ class SimpleICL(Model):
     def __init__(
         self,
         output_dim: int,
-        alpha_num_examples: int = 0,
+        num_contexts: int = 0,
         similarity: str = "l2",
         load_iw: str = None,
         load_ic: str = None,
@@ -186,7 +186,7 @@ class SimpleICL(Model):
         )
         self.iw_predictor = IWPredictor(output_dim)
         self.ic_predictor = ICPredictor(output_dim, similarity)
-        self.alpha_num_examples = alpha_num_examples
+        self.num_contexts = num_contexts
         self.load_iw = load_iw
         self.load_ic = load_ic
 
@@ -218,7 +218,7 @@ class SimpleICL(Model):
         return {
             "alpha": self.alpha.init(
                 alpha_key,
-                np.array([query] * (self.alpha_num_examples + 1)).flatten()[None],
+                np.array([query] * (self.num_contexts + 1)).flatten()[None],
                 eval=True,
             ),
             "iw_predictor": iw_predictor_params,
@@ -231,7 +231,7 @@ class SimpleICL(Model):
         capture_intermediates=False,
     ):
 
-        if self.alpha_num_examples > 0:
+        if self.num_contexts > 0:
 
             def alpha_forward(params, batch):
                 return self.alpha.apply(

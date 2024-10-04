@@ -166,6 +166,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
         if exp_name.startswith("synthetic-transformer-num_relevant_contexts"):
             sbatch_content += "#SBATCH --cpus-per-task=2\n"
             sbatch_content += "#SBATCH --mem=12G\n"
+        elif exp_name.endswith("num_contexts"):
+            sbatch_content += "#SBATCH --mem=12G\n"
         else:
             sbatch_content += "#SBATCH --cpus-per-task=1\n"
             sbatch_content += "#SBATCH --mem=3G\n"

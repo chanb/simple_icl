@@ -1,6 +1,7 @@
 # Simple ICL experiments
+# Alpha
 EXPERIMENTS = {
-    "synthetic-iw_predictor-p_high": {
+    "synthetic-alpha-p_high": {
         "run_time": "01:00:00",
         "num_seeds": 5,
         "variants": [
@@ -18,25 +19,7 @@ EXPERIMENTS = {
             },
         ]
     },
-    "synthetic-ic_predictor-p_high": {
-        "run_time": "01:00:00",
-        "num_seeds": 5,
-        "variants": [
-            {
-                "key": "p_high",
-                "values": [0.5, 0.9, 0.99]
-            },
-            {
-                "key": "dataset_size",
-                "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
-            },
-            {
-                "key": "p_relevant_context",
-                "values": [0.9]
-            },
-        ]
-    },
-    "synthetic-iw_predictor-num_low_freq": {
+    "synthetic-alpha-num_low_freq": {
         "run_time": "05:00:00",
         "num_seeds": 5,
         "variants": [
@@ -54,25 +37,7 @@ EXPERIMENTS = {
             }
         ]
     },
-    "synthetic-ic_predictor-num_low_freq": {
-        "run_time": "05:00:00",
-        "num_seeds": 5,
-        "variants": [
-            {
-                "key": "dataset_size",
-                "values": [2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
-            },
-            {
-                "key": "p_relevant_context",
-                "values": [0.9]
-            },
-            {
-                "key": "num_low_prob_classes",
-                "values": [5, 45, 95, 495]
-            }
-        ]
-    },
-    "synthetic-iw_predictor-num_contexts": {
+    "synthetic-alpha-num_contexts": {
         "run_time": "01:00:00",
         "num_seeds": 5,
         "variants": [
@@ -86,30 +51,124 @@ EXPERIMENTS = {
             },
             {
                 "key": "num_contexts",
-                "values": [1, 2, 4, 8, 16]
+                "values": [1, 2, 4, 8]
             }
         ]
     },
-    "synthetic-ic_predictor-num_contexts": {
-        "run_time": "01:00:00",
-        "num_seeds": 5,
-        "variants": [
-            {
-                "key": "dataset_size",
-                "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
-            },
-            {
-                "key": "p_relevant_context",
-                "values": [0.9]
-            },
-            {
-                "key": "num_contexts",
-                "values": [1, 2, 4, 8, 16]
-            }
-        ]
-    },
-
 }
+
+
+# IW and IC predictors
+# EXPERIMENTS = {
+#     "synthetic-iw_predictor-p_high": {
+#         "run_time": "01:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "p_high",
+#                 "values": [0.5, 0.9, 0.99]
+#             },
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.9]
+#             },
+#         ]
+#     },
+#     "synthetic-ic_predictor-p_high": {
+#         "run_time": "01:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "p_high",
+#                 "values": [0.5, 0.9, 0.99]
+#             },
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.9]
+#             },
+#         ]
+#     },
+#     "synthetic-iw_predictor-num_low_freq": {
+#         "run_time": "05:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.9]
+#             },
+#             {
+#                 "key": "num_low_prob_classes",
+#                 "values": [5, 45, 95, 495]
+#             }
+#         ]
+#     },
+#     "synthetic-ic_predictor-num_low_freq": {
+#         "run_time": "05:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.9]
+#             },
+#             {
+#                 "key": "num_low_prob_classes",
+#                 "values": [5, 45, 95, 495]
+#             }
+#         ]
+#     },
+#     "synthetic-iw_predictor-num_contexts": {
+#         "run_time": "01:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.9]
+#             },
+#             {
+#                 "key": "num_contexts",
+#                 "values": [1, 2, 4, 8]
+#             }
+#         ]
+#     },
+#     "synthetic-ic_predictor-num_contexts": {
+#         "run_time": "01:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.9]
+#             },
+#             {
+#                 "key": "num_contexts",
+#                 "values": [1, 2, 4, 8]
+#             }
+#         ]
+#     },
+# }
 
 # Section 5.2
 # EXPERIMENTS = {
