@@ -6,7 +6,7 @@
         "checkpoint_interval": 500
     },
     "model_config": {
-        "architecture": "ICPredictor",
+        "architecture": "SimpleICL",
         "model_kwargs": {
             "output_dim": 10,
             "num_contexts": 1

@@ -96,43 +96,35 @@ for exp_name, exp_config in EXPERIMENTS.items():
                         config_dict["dataset_kwargs"]["num_high_prob_classes"] + config_dict["dataset_kwargs"]["num_low_prob_classes"]
                     )
             
-            if exp_name == "synthetic-alpha":
+            if exp_name.startswith("synthetic-alpha"):
                 for (load_key, load_name) in (
-                    ("load_iw", "synthetic-iw_predictor"),
-                    ("load_ic", "synthetic-ic_predictor")
+                    ("load_iw", "iw_predictor"),
+                    ("load_ic", "ic_predictor")
                 ):
-                    result_dir = os.path.join(LOG_DIR, load_name)
+                    curr_load_name = exp_name.replace("alpha", load_name)
+                    result_dir = os.path.join(LOG_DIR, curr_load_name)
                     if not os.path.isdir(result_dir):
-                        print("cannot find {} to load".format(load_name))
+                        print("cannot find {} to load".format(curr_load_name))
                         continue
 
                     for learner_path in os.listdir(result_dir):
-                        if load_key == "load_iw":
-                            include = True
-                            for curr_attr in variant_name.split("-"):
-                                if "p_relevant_context" in curr_attr:
-                                    continue
-
-                                if curr_attr not in learner_path:
-                                    include = False
-                                    break
-                            if not include:
-                                continue
-                        else:
-                            if not learner_path.startswith(variant_name):
-                                continue
+                        if not learner_path.startswith(variant_name):
+                            continue
 
                         model_dir = os.path.join(
                             result_dir, learner_path, "models"
                         )
-                        all_steps = [
-                            filename
-                            for filename in sorted(os.listdir(model_dir))
-                        ]
-                        config_dict["model_config"]["model_kwargs"][load_key] = os.path.join(
-                            model_dir, "{}.dill".format(all_steps[-1])
-                        )
-                        break
+                        try:
+                            all_steps = [
+                                filename
+                                for filename in sorted(os.listdir(model_dir))
+                            ]
+                            config_dict["model_config"]["model_kwargs"][load_key] = os.path.join(
+                                model_dir, all_steps[-1]
+                            )
+                            break
+                        except:
+                            pass
                     else:
                         print("cannot find {} to load".format(load_name))
 
