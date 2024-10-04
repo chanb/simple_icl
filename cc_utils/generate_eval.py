@@ -52,7 +52,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
         sbatch_content += "#SBATCH --mem=24G\n"
     else:
         sbatch_content += "#SBATCH --cpus-per-task=1\n"
-        sbatch_content += "#SBATCH --mem=3G\n"
+        sbatch_content += "#SBATCH --mem=12G\n"
 
     sbatch_content += "#SBATCH --array=1-{}\n".format(num_runs)
     sbatch_content += "#SBATCH --output={}/%j.out\n".format(
