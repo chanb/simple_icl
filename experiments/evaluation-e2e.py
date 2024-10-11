@@ -270,14 +270,14 @@ def main(args: SimpleNamespace):
                 curr_model = model
                 curr_params = params
             elif model_type == "iw":
-                curr_model = model.IWPredictor
+                curr_model = model.iw_predictor
                 curr_params = {
-                    CONST_MODEL: params["iw_predictor"]
+                    CONST_MODEL: {"iw_predictor": params["iw_predictor"]}
                 }
             elif model_type == "ic":
-                curr_model = model.ICPredictor
+                curr_model = model.ic_predictor
                 curr_params = {
-                    CONST_MODEL: params["ic_predictor"]
+                    CONST_MODEL: {"ic_predictor": params["ic_predictor"]}
                 }
 
             for eval_name in prefetched_data:
