@@ -268,22 +268,15 @@ def main(args: SimpleNamespace):
 
             if model_type == "alpha":
                 curr_model = model
-                curr_params = params
             elif model_type == "iw":
                 curr_model = model.iw_predictor
-                curr_params = {
-                    CONST_MODEL: {"iw_predictor": params["iw_predictor"]}
-                }
             elif model_type == "ic":
                 curr_model = model.ic_predictor
-                curr_params = {
-                    CONST_MODEL: {"ic_predictor": params["ic_predictor"]}
-                }
 
             for eval_name in prefetched_data:
                 aux = evaluate(
                     model=curr_model,
-                    params=curr_params,
+                    params=params,
                     prefetched_data=prefetched_data[eval_name],
                     max_label=None,
                     sample_key=sample_key,
