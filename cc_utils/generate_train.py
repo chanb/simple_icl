@@ -95,6 +95,38 @@ for exp_name, exp_config in EXPERIMENTS.items():
                         "output_dim",
                         config_dict["dataset_kwargs"]["num_high_prob_classes"] + config_dict["dataset_kwargs"]["num_low_prob_classes"]
                     )
+            
+            if exp_name.startswith("synthetic-alpha"):
+                for (load_key, load_name) in (
+                    ("load_iw", "iw_predictor"),
+                    ("load_ic", "ic_predictor")
+                ):
+                    curr_load_name = exp_name.replace("alpha", load_name)
+                    result_dir = os.path.join(LOG_DIR, curr_load_name)
+                    if not os.path.isdir(result_dir):
+                        print("cannot find {} to load".format(curr_load_name))
+                        continue
+
+                    for learner_path in os.listdir(result_dir):
+                        if not learner_path.startswith(variant_name):
+                            continue
+
+                        model_dir = os.path.join(
+                            result_dir, learner_path, "models"
+                        )
+                        try:
+                            all_steps = [
+                                filename
+                                for filename in sorted(os.listdir(model_dir))
+                            ]
+                            config_dict["model_config"]["model_kwargs"][load_key] = os.path.join(
+                                model_dir, all_steps[-1]
+                            )
+                            break
+                        except:
+                            pass
+                    else:
+                        print("cannot find {} to load".format(load_name))
 
             json.dump(
                 config_dict,
@@ -125,6 +157,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
     else:
         if exp_name.startswith("synthetic-transformer-num_relevant_contexts"):
             sbatch_content += "#SBATCH --cpus-per-task=2\n"
+            sbatch_content += "#SBATCH --mem=12G\n"
+        elif exp_name.endswith("num_contexts"):
             sbatch_content += "#SBATCH --mem=12G\n"
         else:
             sbatch_content += "#SBATCH --cpus-per-task=1\n"
