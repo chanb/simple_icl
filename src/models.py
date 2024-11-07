@@ -424,7 +424,7 @@ class InContextSupervisedGRU(Model):
             ).reshape((len(input_embedding), -1, self.embed_dim))
 
             stacked_inputs = jnp.concatenate(
-                (stacked_inputs, input_embedding[:, [-1]]), axis=-1
+                (stacked_inputs, input_embedding[:, [-1]]), axis=1
             ).reshape((len(input_embedding), -1, self.embed_dim))
 
             return (
