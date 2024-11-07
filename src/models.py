@@ -286,6 +286,257 @@ def identity(x):
     return x
 
 
+class InContextSupervisedGRU(Model):
+    """A GRU for in-context learning."""
+
+    def __init__(
+        self,
+        output_dim: int,
+        embed_dim: int,
+        input_tokenizer: str = "mlp",
+        query_pred_only: bool = False,
+        freeze_input_tokenizer: bool = True,
+        **kwargs,
+    ) -> None:
+        self.gru = nn.RNN(nn.GRUCell(embed_dim))
+        if input_tokenizer == "mlp":
+            self.input_tokenizer = MLPModule(
+                layers=[embed_dim],
+                activation=identity,
+                output_activation=identity,
+                use_batch_norm=False,
+                use_bias=True,
+                flatten=False,
+            )
+        elif input_tokenizer == "resnet":
+            self.input_tokenizer = ResNetV1Module(
+                blocks_per_group=[2, 2, 2, 2],
+                features=[12, 32, 32, embed_dim],
+                stride=[1, 2, 2, 2],
+                use_projection=[
+                    True,
+                    True,
+                    True,
+                    True,
+                ],
+                use_bottleneck=True,
+                use_batch_norm=False,
+            )
+        else:
+            raise NotImplementedError
+        self.output_tokenizer = nn.Dense(embed_dim)
+        self.predictor = nn.Dense(int(np.product(output_dim)))
+
+        self.embed_dim = embed_dim
+        self.freeze_input_tokenizer = freeze_input_tokenizer
+        self.tokenize = jax.jit(self.make_tokenize())
+        self.get_latent = jax.jit(self.make_get_latent())
+        self.forward = jax.jit(self.make_forward(query_pred_only))
+
+    def init(
+        self,
+        model_key: jrandom.PRNGKey,
+        input_space,
+        output_space,
+    ) -> Union[optax.Params, Dict[str, Any]]:
+        """
+        Initialize model parameters.
+
+        :param model_key: the random number generation key for initializing parameters
+        :param input_space: the input space
+        :param output_space: the output space
+        :type model_key: jrandom.PRNGKey
+        :return: the initialized parameters
+        :rtype: Union[optax.Params, Dict[str, Any]]
+
+        """
+        input_key, output_key, gru_key, predictor_key = jrandom.split(
+            model_key, 4
+        )
+        dummy_token = np.zeros((1, 1, self.embed_dim))
+        dummy_repr = np.zeros((1, 1, self.embed_dim))
+
+        return {
+            CONST_INPUT_TOKENIZER: (
+                {
+                    "params": {
+                        "Dense_0": {
+                            "kernel": jnp.eye(self.embed_dim),
+                            "bias": jnp.zeros(self.embed_dim),
+                        }
+                    }
+                }
+                if self.freeze_input_tokenizer
+                else self.input_tokenizer.init(
+                    input_key, input_space.sample()[None], eval=True
+                )
+            ),
+            CONST_OUTPUT_TOKENIZER: self.output_tokenizer.init(
+                output_key, np.zeros(output_space.n)[None]
+            ),
+            CONST_GRU: self.gru.init(gru_key, dummy_token),
+            CONST_PREDICTOR: self.predictor.init(predictor_key, dummy_repr),
+        }
+
+    def make_tokenize(
+        self,
+    ) -> Callable:
+        """
+        Makes the tokenize call of the ICL model.
+
+        :return: the tokenize call.
+        :rtype: Callable
+        """
+
+        def tokenize(
+            params: Union[optax.Params, Dict[str, Any]],
+            batch: Any,
+            eval: bool = False,
+            **kwargs,
+        ) -> Tuple[chex.Array, chex.Array]:
+            """
+            Get latent call of the GPT.
+
+            :param params: the model parameters
+            :param batch: the batch
+            :type params: Union[optax.Params, Dict[str, Any]]
+            :type batch: Any
+            :return: the output and a pass-through carry
+            :rtype: Tuple[chex.Array, chex.Array]
+
+            """
+
+            input_embedding, input_updates = self.input_tokenizer.apply(
+                params[CONST_INPUT_TOKENIZER],
+                batch["example"],
+                eval=eval,
+                mutable=[CONST_BATCH_STATS],
+            )
+
+            context_output_embedding, output_updates = self.output_tokenizer.apply(
+                params[CONST_OUTPUT_TOKENIZER],
+                batch["target"][:, :-1],
+                mutable=[CONST_BATCH_STATS],
+            )
+
+            stacked_inputs = jnp.concatenate(
+                (input_embedding[:, :-1], context_output_embedding), axis=-1
+            ).reshape((len(input_embedding), -1, self.embed_dim))
+
+            stacked_inputs = jnp.concatenate(
+                (stacked_inputs, input_embedding[:, [-1]]), axis=1
+            ).reshape((len(input_embedding), -1, self.embed_dim))
+
+            return (
+                stacked_inputs,
+                {
+                    CONST_INPUT_TOKENIZER: input_updates,
+                    CONST_OUTPUT_TOKENIZER: output_updates,
+                },
+            )
+
+        return tokenize
+
+    def make_get_latent(
+        self,
+    ) -> Callable:
+        """
+        Makes the get latent call of the ICL model.
+
+        :return: the get latent call.
+        :rtype: Callable
+        """
+
+        def get_latent(
+            params: Union[optax.Params, Dict[str, Any]],
+            batch: Any,
+            eval: bool = False,
+            **kwargs,
+        ) -> Tuple[chex.Array, chex.Array, Any]:
+            """
+            Get latent call of the GRU.
+
+            :param params: the model parameters
+            :param batch: the batch
+            :type params: Union[optax.Params, Dict[str, Any]]
+            :type batch: Any
+            :return: the output and a pass-through carry
+            :rtype: Tuple[chex.Array, chex.Array, Any]
+
+            """
+            stacked_inputs, token_updates = self.tokenize(params, batch, eval, **kwargs)
+            (repr, gru_updates) = self.gru.apply(
+                params[CONST_GRU],
+                stacked_inputs,
+                mutable=[CONST_BATCH_STATS],
+                **kwargs,
+            )
+
+            return repr, {**token_updates, CONST_GRU: gru_updates}
+
+        return get_latent
+
+    def make_forward(self, query_pred_only: bool) -> Callable:
+        """
+        Makes the forward call of the ICL model.
+
+        :param query_pred_only: whether or not to output the query prediciton only
+        :type query_pred_only: bool
+        :return: the forward call.
+        :rtype: Callable
+        """
+
+        if query_pred_only:
+
+            def process_prediction(preds):
+                return preds[:, -1]
+
+        else:
+
+            def process_prediction(preds):
+                return preds[:, ::2]
+
+        def forward(
+            params: Union[optax.Params, Dict[str, Any]],
+            batch: Any,
+            eval: bool = False,
+            **kwargs,
+        ) -> Tuple[chex.Array, chex.Array, Any]:
+            """
+            Forward call of the GPT.
+
+            :param params: the model parameters
+            :param batch: the batch
+            :type params: Union[optax.Params, Dict[str, Any]]
+            :type batch: Any
+            :return: the output and a pass-through carry
+            :rtype: Tuple[chex.Array, chex.Array, Any]
+
+            """
+            repr, latent_updates = self.get_latent(params, batch, eval, **kwargs)
+            outputs = self.predictor.apply(
+                params[CONST_PREDICTOR],
+                repr,
+            )
+
+            return process_prediction(outputs), latent_updates
+
+        return forward
+
+    def update_batch_stats(
+        self, params: Dict[str, Any], batch_stats: Any
+    ) -> Dict[str, Any]:
+        params[CONST_INPUT_TOKENIZER] = self.input_tokenizer.update_batch_stats(
+            params[CONST_INPUT_TOKENIZER],
+            batch_stats[CONST_INPUT_TOKENIZER],
+        )
+        params[CONST_OUTPUT_TOKENIZER] = self.output_tokenizer.update_batch_stats(
+            params[CONST_OUTPUT_TOKENIZER],
+            batch_stats[CONST_OUTPUT_TOKENIZER],
+        )
+        return params
+
+
 class InContextSupervisedTransformer(Model):
     """A GPT for in-context learning."""
 
@@ -657,9 +908,5 @@ class InContextSupervisedTransformer(Model):
         params[CONST_OUTPUT_TOKENIZER] = self.output_tokenizer.update_batch_stats(
             params[CONST_OUTPUT_TOKENIZER],
             batch_stats[CONST_OUTPUT_TOKENIZER],
-        )
-        params[CONST_GPT] = self.output_tokenizer.update_batch_stats(
-            params[CONST_GPT],
-            batch_stats[CONST_GPT],
         )
         return params

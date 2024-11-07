@@ -23,7 +23,7 @@ import src.models as models
 def get_device(device: str):
     (device_name, *device_ids) = device.split(":")
     if device_name == CONST_CPU:
-        os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        os.environ["JAX_PLATFORMS"] = "cpu"
     elif device_name == CONST_GPU:
         assert (
             len(device_ids) > 0
