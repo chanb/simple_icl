@@ -468,6 +468,7 @@ class InContextSupervisedGRU(Model):
             (repr, gru_updates) = self.gru.apply(
                 params[CONST_GRU],
                 stacked_inputs,
+                mutable=[CONST_BATCH_STATS],
                 **kwargs,
             )
 
