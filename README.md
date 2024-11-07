@@ -9,6 +9,7 @@ pip install jax==0.4.30 # Or pip install -U "jax[cuda12]==0.4.30"
 pip install flax==0.8.5 orbax-checkpoint==0.4.3
 pip install chex optax dill gymnasium scikit-learn matplotlib seaborn
 pip install prefetch_generator
+pip install numpy==1.26.4
 ```
 
 ## Example
