@@ -20,7 +20,7 @@ CONST_LINEAR_WARMUP_SQRT_DECAY = "linear_warmup_sqrt_decay"
 
 # Model
 CONST_GPT = "gpt"
-COSNT_GRU = "gru"
+CONST_GRU = "gru"
 CONST_PREDICTOR = "predictor"
 CONST_INPUT_TOKENIZER = "input_tokenizer"
 CONST_OUTPUT_TOKENIZER = "output_tokenizer"
