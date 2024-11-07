@@ -350,8 +350,8 @@ class InContextSupervisedGRU(Model):
         :rtype: Union[optax.Params, Dict[str, Any]]
 
         """
-        input_key, output_key, gru_key, predictor_key, pe_key = jrandom.split(
-            model_key, 5
+        input_key, output_key, gru_key, predictor_key = jrandom.split(
+            model_key, 4
         )
         dummy_token = np.zeros((1, 1, self.embed_dim))
         dummy_repr = np.zeros((1, 1, self.embed_dim))
@@ -374,10 +374,7 @@ class InContextSupervisedGRU(Model):
             CONST_OUTPUT_TOKENIZER: self.output_tokenizer.init(
                 output_key, np.zeros(output_space.n)[None]
             ),
-            CONST_GRU: self.gru.init(gru_key, dummy_token, eval=True),
-            CONST_POSITIONAL_ENCODING: self.positional_encoding.init(
-                pe_key, dummy_token
-            ),
+            CONST_GRU: self.gru.init(gru_key, dummy_token),
             CONST_PREDICTOR: self.predictor.init(predictor_key, dummy_repr),
         }
 
@@ -471,8 +468,6 @@ class InContextSupervisedGRU(Model):
             (repr, gru_updates) = self.gru.apply(
                 params[CONST_GRU],
                 stacked_inputs,
-                eval,
-                mutable=[CONST_BATCH_STATS],
                 **kwargs,
             )
 
