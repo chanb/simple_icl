@@ -22,7 +22,7 @@
         },
         "opt_kwargs": {},
         "max_grad_norm": false,
-        "mask_names": ["ic_predictor", "iw_predictor"]
+        "mask_names": []
     },
     "dataset_name": "synthetic",
     "dataset_kwargs": {

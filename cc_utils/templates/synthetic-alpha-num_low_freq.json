@@ -13,11 +13,11 @@
         }
     },
     "optimizer_config": {
-        "optimizer": "adam",
+        "optimizer": "sgd",
         "lr": {
             "scheduler": "constant_schedule",
             "scheduler_kwargs": {
-                "value": 3e-4
+                "value": 1e-5
             }
         },
         "opt_kwargs": {},

@@ -99,7 +99,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
 
     sbatch_content += "  --learner_path=${learner_path} \\\n"
     sbatch_content += "  --model_type=${model_type} \\\n"
-    sbatch_content += "  --save_path={} \n".format(os.path.join(EVAL_DIR, exp_name.replace("e2e_alpha", "${model_type}")))
+    sbatch_content += "  --save_path={} \n".format(os.path.join(EVAL_DIR, exp_name.replace("e2e_alpha", "${model_type}").replace("alpha", "${model_type}")))
     sbatch_content += 'echo "Program test finished with exit code $? at: `date`"\n'
 
     script_path = os.path.join(sbatch_dir, f"run_all-eval-{exp_name}.sh")

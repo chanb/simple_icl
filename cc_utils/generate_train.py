@@ -102,6 +102,8 @@ for exp_name, exp_config in EXPERIMENTS.items():
                     ("load_ic", "ic_predictor")
                 ):
                     curr_load_name = exp_name.replace("alpha", load_name)
+                    if curr_load_name.endswith("has_context"):
+                        curr_load_name = exp_name.replace("-has_context", "")
                     result_dir = os.path.join(LOG_DIR, curr_load_name)
                     if not os.path.isdir(result_dir):
                         print("cannot find {} to load".format(curr_load_name))
