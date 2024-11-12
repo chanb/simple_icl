@@ -41,6 +41,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
         if "p_relevant_context_0.0" not in variant and "p_relevant_context_1.0" not in variant:
             continue
 
+        print(learner_path)
         for p_relevant_context in p_relevant_contexts:
             num_runs += 1
             dat_content += "export learner_path={} p_relevant_context={} save_path={} \n".format(
