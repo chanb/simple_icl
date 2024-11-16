@@ -34,12 +34,12 @@ class Synthetic:
         assert num_high_prob_classes + num_low_prob_classes <= dataset_size
         assert num_relevant_contexts is None or num_relevant_contexts > 0
 
-        self.num_high_prob_classes = num_high_prob_classes
-        self.num_low_prob_classes = num_low_prob_classes
+        self.num_high_freq_classes = num_high_prob_classes
+        self.num_low_freq_classes = num_low_prob_classes
         self.num_classes = num_high_prob_classes + num_low_prob_classes
         self.p_high = p_high
         self.p_relevant_context = p_relevant_context
-        self.low_prob = 1 - p_high
+        self.p_low = 1 - p_high
         self.num_dims = num_dims
         self.dataset_size = dataset_size
         self.train = train
@@ -53,7 +53,6 @@ class Synthetic:
 
         self.centers = self.rng.standard_normal(size=(self.num_classes, self.num_dims))
         self.centers /= np.linalg.norm(self.centers, axis=-1, keepdims=True)
-        self._generate_dataset()
 
     @property
     def input_space(self):
@@ -63,169 +62,83 @@ class Synthetic:
     def output_space(self):
         return spaces.Discrete(self.num_classes)
 
-    def _generate_dataset(self):
-        print("generating dataset")
-        tic = timeit.default_timer()
-        # NOTE: The zipfian distribution skews towards smaller class labels.
-        weights = [
-            self.p_high / self.num_high_prob_classes
-        ] * self.num_high_prob_classes + [
-            self.low_prob / self.num_low_prob_classes
-        ] * self.num_low_prob_classes
-
-        if self.train:
-            rng = np.random.RandomState(self.seed)
-        else:
-            rng = np.random.RandomState(self.seed + 1)
-
-        self.targets = rng.choice(
-            self.num_classes,
-            size=(self.dataset_size, self.num_contexts + 1),
-            p=weights,
-        )
-        self.targets[rng.permutation(self.dataset_size)[: self.num_classes], -1] = (
-            np.arange(self.num_classes)
-        )
-        self.swap_labels = rng.uniform(size=self.targets.shape) < self.label_noise
-
-        if self.conditioning == "high_prob":
-            self.targets[..., -1] = rng.choice(
-                self.num_high_prob_classes, size=(self.dataset_size,)
-            )
-        elif self.conditioning == "low_prob":
-            self.targets[..., -1] = (
-                rng.choice(self.num_low_prob_classes, size=(self.dataset_size,))
-                + self.num_high_prob_classes
-            )
-
-        relevant_context_mask = rng.choice(
-            2,
-            size=(self.dataset_size,),
-            p=[1 - self.p_relevant_context, self.p_relevant_context],
-        )
-
-        context_from_query = np.sum(
-            self.targets[:, :-1] == self.targets[:, [-1]], axis=-1
-        )
-
-        relevant_context_idxes = np.where(relevant_context_mask == 1)[0]
-        if self.num_relevant_contexts is None:
-            no_context_from_query_idxes = np.where(
-                context_from_query[relevant_context_idxes] == 0
-            )[0]
-
-            while len(no_context_from_query_idxes) > 0:
-                self.targets[
-                    relevant_context_idxes[no_context_from_query_idxes], :-1
-                ] = rng.choice(
-                    self.num_classes,
-                    size=(len(no_context_from_query_idxes), self.num_contexts),
-                    p=weights,
-                )
-                context_from_query = np.sum(
-                    self.targets[:, :-1] == self.targets[:, [-1]], axis=-1
-                )
-
-                no_context_from_query_idxes = np.where(
-                    context_from_query[relevant_context_idxes] == 0
-                )[0]
-        else:
-            if self.num_relevant_contexts != self.num_contexts:
-                no_context_from_query_idxes = np.where(
-                    context_from_query[relevant_context_idxes]
-                    != self.num_relevant_contexts
-                )[0]
-                while len(no_context_from_query_idxes) > 0:
-                    self.targets[relevant_context_idxes[no_context_from_query_idxes], : self.num_relevant_contexts] = (
-                        self.targets[relevant_context_idxes[no_context_from_query_idxes], -1][..., None]
-                    )
-                    self.targets[
-                        relevant_context_idxes[no_context_from_query_idxes],
-                        self.num_relevant_contexts : -1,
-                    ] = rng.choice(
-                        self.num_classes,
-                        size=(
-                            len(no_context_from_query_idxes),
-                            self.num_contexts - self.num_relevant_contexts,
-                        ),
-                        p=weights,
-                    )
-                    context_from_query = np.sum(
-                        self.targets[:, self.num_relevant_contexts : -1]
-                        == self.targets[:, [-1]],
-                        axis=-1,
-                    )
-
-                    no_context_from_query_idxes = np.where(
-                        context_from_query[relevant_context_idxes] > 0
-                    )[0]
-                self.targets[relevant_context_idxes, :-1] = np.random.default_rng(self.seed).permuted(
-                    self.targets[relevant_context_idxes, :-1], axis=-1
-                )
-                assert np.all(np.sum(
-                    self.targets[relevant_context_idxes, :-1] == self.targets[relevant_context_idxes, [-1]][..., None], axis=-1
-                ) == self.num_relevant_contexts)
-            else:
-                self.targets[relevant_context_idxes, : self.num_relevant_contexts] = (
-                    self.targets[relevant_context_idxes, -1][..., None]
-                )
-
-        irrelevant_context_idxes = np.where(relevant_context_mask == 0)[0]
-        has_context_from_query_idxes = np.where(
-            context_from_query[irrelevant_context_idxes] > 0
-        )[0]
-        while len(has_context_from_query_idxes) > 0:
-            self.targets[
-                irrelevant_context_idxes[has_context_from_query_idxes], :-1
-            ] = rng.choice(
-                self.num_classes,
-                size=(len(has_context_from_query_idxes), self.num_contexts),
-                p=weights,
-            )
-            context_from_query = np.sum(
-                self.targets[:, :-1] == self.targets[:, [-1]], axis=-1
-            )
-            has_context_from_query_idxes = np.where(
-                context_from_query[irrelevant_context_idxes] > 0
-            )[0]
-
-        self.inputs = self.centers[self.targets.flatten()].reshape(
-            (self.dataset_size, self.num_contexts + 1, -1)
-        )
-        self.inputs += self.input_noise_std * rng.randn(*self.inputs.shape)
-        toc = timeit.default_timer()
-        print("dataset generation took {}s".format(toc - tic))
-
     def get_sequences(
         self,
         flip_label: int = 0,
     ):
-        while True:
-            sample_i = self.rng.choice(self.dataset_size)
+        sample_rng = np.random.RandomState(self.rng.randint(0, 2**16) + int(self.train))
+        weights = [
+            self.p_high / self.num_high_freq_classes
+        ] * self.num_high_freq_classes + [
+            self.p_low / self.num_low_freq_classes
+        ] * self.num_low_freq_classes
+        weights_high_freq = [
+            1 / self.num_high_freq_classes
+        ] * self.num_high_freq_classes
+        weights_low_freq = [1 / self.num_low_freq_classes] * self.num_low_freq_classes
 
-            example = self.inputs[sample_i]
-            label = self.targets[sample_i]
+        while True:
+            sample_i = sample_rng.choice(self.dataset_size)
+
+            curr_rng = np.random.RandomState(sample_i)
+
+            if self.conditioning == "none":
+                target = curr_rng.choice(self.num_classes, p=weights)
+            elif self.conditioning == "high_prob":
+                target = curr_rng.choice(self.num_high_freq_classes, p=weights_high_freq)
+            elif self.conditioning == "low_prob":
+                target = curr_rng.choice(self.num_low_freq_classes, p=weights_low_freq) + self.num_high_freq_classes
+
+            context_labels = (
+                curr_rng.choice(self.num_classes, p=weights, size=(self.num_contexts,))
+            ).astype(int)
+
+            # Decide context labels
+            if self.num_relevant_contexts is not None:
+                num_relevant = self.num_relevant_contexts
+            else:
+                num_relevant = np.sum(curr_rng.uniform(size=(self.num_contexts)) < self.p_relevant_context)
+
+            num_relevant_in_context = len(np.where(context_labels == target)[0])
+
+            if num_relevant > 0:
+                num_replacement = num_relevant - num_relevant_in_context
+                irrelevant_context_idx = curr_rng.permutation(np.where(context_labels != target)[0])[:num_replacement]
+                context_labels[irrelevant_context_idx] = target
+            else:
+                relevant_context_idx = np.where(context_labels == target)[0]
+                context_labels[relevant_context_idx] = (
+                    curr_rng.choice(self.num_classes, p=weights, size=relevant_context_idx.shape)
+                ).astype(int)
+
+            # Get prototypes
+            label = np.concatenate((context_labels, [target]))
+            example = self.centers[label]
+            example = (
+                example + curr_rng.standard_normal(example.shape) * self.input_noise_std
+            )
 
             # OOD labels: Make sure OOD label is still within the same frequency class
             if flip_label:
-                high_prob_class_idxes = np.where(label < self.num_high_prob_classes)[0]
-                low_prob_class_idxes = np.where(label >= self.num_high_prob_classes)[0]
-                label[high_prob_class_idxes] = (
-                    label[high_prob_class_idxes] + 1
-                ) % self.num_high_prob_classes
-                label[low_prob_class_idxes] = (
-                    label[low_prob_class_idxes] - self.num_high_prob_classes + 1
-                ) % self.num_low_prob_classes + self.num_high_prob_classes
+                high_freq_class_idxes = np.where(label < self.num_high_freq_classes)[0]
+                low_freq_class_idxes = np.where(label >= self.num_high_freq_classes)[0]
+                label[high_freq_class_idxes] = (
+                    label[high_freq_class_idxes] + 1
+                ) % self.num_high_freq_classes
+                label[low_freq_class_idxes] = (
+                    label[low_freq_class_idxes] - self.num_high_freq_classes + 1
+                ) % self.num_low_freq_classes + self.num_high_freq_classes
 
             # Get label distribution
-            target = label[-1]
             label_dist = np.zeros(self.num_classes)
             label_dist[target] = 1 - self.label_noise
             label_dist[(target + 1) % self.num_classes] = self.label_noise
 
             # Label noise
-            swap_label = self.swap_labels[sample_i]
-            label = np.where(swap_label, (label + 1) % self.num_classes, label)
+            flip_mask = (curr_rng.uniform(size=label.shape) < self.label_noise).astype(
+                int
+            )
+            label = np.where(flip_mask, (label + 1) % self.num_classes, label)
 
             one_hot = np.zeros((self.num_contexts + 1, self.num_classes))
             one_hot[np.arange(self.num_contexts + 1), label] = 1
