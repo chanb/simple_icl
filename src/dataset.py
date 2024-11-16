@@ -14,6 +14,7 @@ import jax
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
+import src.datasets.binary_synthetic as binary_synthetic
 import src.datasets.omniglot as omniglot
 import src.datasets.streamblock as streamblock
 import src.datasets.synthetic as synthetic
@@ -234,6 +235,48 @@ def get_synthetic_seq_generator(
     )
 
 
+def get_binary_synthetic_seq_generator(
+    dataset_kwargs: SimpleNamespace,
+    seed: int,
+):
+    task = binary_synthetic.BinarySynthetic(
+        dataset_kwargs.dataset_size,
+        dataset_kwargs.num_contexts,
+        dataset_kwargs.num_high_freq_classes,
+        dataset_kwargs.num_low_freq_classes,
+        dataset_kwargs.p_balance,
+        dataset_kwargs.p_high,
+        dataset_kwargs.num_dims,
+        seed,
+        dataset_kwargs.train,
+        getattr(dataset_kwargs, "conditioning", "none"),
+        getattr(dataset_kwargs, "input_noise_std", 0.0),
+        getattr(dataset_kwargs, "label_noise", 0.0),
+        getattr(dataset_kwargs, "num_relevant_contexts", None),
+    )
+    num_classes = 2
+
+    dataset = tf.data.Dataset.from_generator(
+        task.get_sequences,
+        args=tuple(),
+        output_signature={
+            "example": tf.TensorSpec(
+                shape=(dataset_kwargs.num_contexts + 1, dataset_kwargs.num_dims),
+                dtype=tf.dtypes.float32,
+            ),
+            "label": tf.TensorSpec(
+                shape=(dataset_kwargs.num_contexts + 1, num_classes),
+                dtype=tf.dtypes.int32,
+            ),
+        },
+    )
+    return TFDataset(
+        dataset,
+        task.input_space,
+        task.output_space,
+    )
+
+
 def prepare_seqs_for_icl(ds, num_classes: int):
     """Convert example and label sequences for use by the transformer."""
 
@@ -326,6 +369,8 @@ def get_data_loader(config: SimpleNamespace) -> Any:
             seq_generator = get_omniglot_seq_generator
         elif dataset_name == "synthetic":
             seq_generator = get_synthetic_seq_generator
+        elif dataset_name == "binary_synthetic":
+            seq_generator = get_binary_synthetic_seq_generator
 
         dataset = seq_generator(dataset_kwargs, config.seeds.data_seed)
         ds_seqs = dataset.dataset
