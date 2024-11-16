@@ -387,6 +387,7 @@ class GPTBlock(nn.Module):
     @nn.compact
     def __call__(self, x: chex.Array, eval: bool, **kwargs) -> chex.Array:
         mask = nn.make_causal_mask(x[..., 0]) * self.use_causal_mask
+        mask = mask + jnp.ones_like(mask) * (1 - self.use_causal_mask)
         attention_out = SelfAttentionModule(self.num_heads, self.embed_dim)(
             nn.LayerNorm(epsilon=1e-5, use_fast_variance=False)(x), eval, mask=mask
         )
