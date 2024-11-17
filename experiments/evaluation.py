@@ -188,15 +188,17 @@ def get_binary_synthetic_eval_datasets(
 ):
     configs = dict()
 
-    for conditioning in ["none", "in_context", "in_weight"]:
-        eval_config_dict = copy.deepcopy(config_dict)
+    for conditioning in ["none", "ic", "iw"]:
+        for flip_label in [True, False]:
+            eval_config_dict = copy.deepcopy(config_dict)
 
-        eval_config_dict["dataset_kwargs"]["dataset_size"] = num_eval_samples * 5
-        eval_config_dict["dataset_kwargs"]["train"] = False
-        eval_config_dict["dataset_kwargs"]["conditioning"] = conditioning
+            eval_config_dict["dataset_kwargs"]["dataset_size"] = num_eval_samples * 5
+            eval_config_dict["dataset_kwargs"]["train"] = False
+            eval_config_dict["dataset_kwargs"]["conditioning"] = conditioning
+            eval_config_dict["dataset_kwargs"]["flip_label"] = flip_label
 
-        eval_config = parse_dict(eval_config_dict)
-        configs["eval-{}".format(conditioning)] = eval_config
+            eval_config = parse_dict(eval_config_dict)
+            configs["eval-{}{}".format(conditioning, "-flip_label" if flip_label else "")] = eval_config
 
     return {
         eval_name: get_data_loader(config) for eval_name, config in configs.items()

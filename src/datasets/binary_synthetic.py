@@ -27,6 +27,7 @@ class BinarySynthetic:
         input_noise_std: float = 0.0,
         label_noise: float = 0.0,
         num_relevant_contexts: int = None,
+        flip_label: bool = False,
     ):
         assert 0.0 < p_high < 1.0
         assert 0.0 < p_balance < 1.0
@@ -48,6 +49,7 @@ class BinarySynthetic:
         self.num_contexts = num_contexts
         self.num_relevant_contexts = num_relevant_contexts
         self.conditioning = conditioning
+        self.flip_label = flip_label
         self.rng = np.random.RandomState(seed)
 
         class_0_prototypes = self.rng.standard_normal(
@@ -107,7 +109,7 @@ class BinarySynthetic:
                 prototype_idxes = curr_rng.choice(
                     self.num_classes, p=weights, size=(self.num_contexts + 1,)
                 )
-            elif self.conditioning == "in_weight":
+            elif self.conditioning == "iw":
                 query_idx = curr_rng.choice(
                     self.num_high_freq_classes, p=weights_high_freq
                 )
@@ -120,7 +122,7 @@ class BinarySynthetic:
                     + self.num_high_freq_classes
                 )
                 prototype_idxes = np.concatenate((example_idxes, [query_idx]))
-            elif self.conditioning == "in_context":
+            elif self.conditioning == "ic":
                 query_idx = (
                     curr_rng.choice(self.num_low_freq_classes, p=weights_low_freq)
                     + self.num_high_freq_classes
@@ -155,6 +157,9 @@ class BinarySynthetic:
             label = flip_mask * (1 - label) + (1 - flip_mask) * label
             one_hot = np.zeros((self.num_contexts + 1, 2))
             one_hot[np.arange(self.num_contexts + 1), label] = 1
+
+            if self.flip_label:
+                one_hot = 1 - one_hot
 
             yield {
                 "example": example,

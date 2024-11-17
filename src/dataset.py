@@ -253,6 +253,7 @@ def get_binary_synthetic_seq_generator(
         getattr(dataset_kwargs, "input_noise_std", 0.0),
         getattr(dataset_kwargs, "label_noise", 0.0),
         getattr(dataset_kwargs, "num_relevant_contexts", None),
+        getattr(dataset_kwargs, "flip_label", False),
     )
     num_classes = 2
 
