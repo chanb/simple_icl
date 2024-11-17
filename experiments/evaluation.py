@@ -288,7 +288,7 @@ def main(args: SimpleNamespace):
             dataset_output_dim=dataset.output_space.n,
         )
 
-        del data_loader
+        del ds
         del dataset
 
     stats = {eval_name: dict() for eval_name in prefetched_data}
