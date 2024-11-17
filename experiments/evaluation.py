@@ -288,39 +288,36 @@ def main(args: SimpleNamespace):
             dataset_output_dim=dataset.output_space.n,
         )
 
-    try:
-        stats = {eval_name: dict() for eval_name in datasets}
-        checkpoint_steps = []
-        for params, model, checkpoint_step in tqdm(iterate_models(learner_path)):
-            checkpoint_steps.append(checkpoint_step)
-            sample_key = jrandom.fold_in(sample_key, checkpoint_step)
-            for eval_name in prefetched_data:
-                aux = evaluate(
-                    model=model,
-                    params=params,
-                    prefetched_data=prefetched_data[eval_name],
-                    max_label=None,
-                    sample_key=sample_key,
-                    fixed_length=fixed_length,
-                )
-                sample_key = jrandom.split(sample_key)[0]
+        del data_loader
+        del dataset
 
-                for aux_key in aux:
-                    stats[eval_name].setdefault(aux_key, [])
-                    stats[eval_name][aux_key].append(aux[aux_key])
+    stats = {eval_name: dict() for eval_name in prefetched_data}
+    checkpoint_steps = []
+    for params, model, checkpoint_step in tqdm(iterate_models(learner_path)):
+        checkpoint_steps.append(checkpoint_step)
+        sample_key = jrandom.fold_in(sample_key, checkpoint_step)
+        for eval_name in prefetched_data:
+            aux = evaluate(
+                model=model,
+                params=params,
+                prefetched_data=prefetched_data[eval_name],
+                max_label=None,
+                sample_key=sample_key,
+                fixed_length=fixed_length,
+            )
+            sample_key = jrandom.split(sample_key)[0]
 
-        pickle.dump(
-            {"checkpoint_steps": checkpoint_steps, "stats": stats},
-            open(
-                os.path.join(save_path, "{}.pkl".format(os.path.basename(learner_path))),
-                "wb",
-            ),
-        )
-    finally:
-        for eval_name in datasets:
-            data_loader, dataset = datasets[eval_name]
-            del data_loader
-            del dataset
+            for aux_key in aux:
+                stats[eval_name].setdefault(aux_key, [])
+                stats[eval_name][aux_key].append(aux[aux_key])
+
+    pickle.dump(
+        {"checkpoint_steps": checkpoint_steps, "stats": stats},
+        open(
+            os.path.join(save_path, "{}.pkl".format(os.path.basename(learner_path))),
+            "wb",
+        ),
+    )
 
 
 if __name__ == "__main__":

@@ -69,7 +69,6 @@ def get_preds_labels(model, params, prefetched_data, max_label=None):
     try:
         ret_auxes = {k: np.concatenate(v) for k, v in all_auxes.items()}
     except:
-        print("CANNOT PARSE ALL AUXES")
         ret_auxes = {
             "context contains query class": np.concatenate(all_auxes["context contains query class"])
         }
