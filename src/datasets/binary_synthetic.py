@@ -109,7 +109,7 @@ class BinarySynthetic:
                 prototype_idxes = curr_rng.choice(
                     self.num_classes, p=weights, size=(self.num_contexts + 1,)
                 )
-            elif self.conditioning == "iw":
+            elif self.conditioning in ["iw", "in_weight"]:
                 query_idx = curr_rng.choice(
                     self.num_high_freq_classes, p=weights_high_freq
                 )
@@ -122,7 +122,7 @@ class BinarySynthetic:
                     + self.num_high_freq_classes
                 )
                 prototype_idxes = np.concatenate((example_idxes, [query_idx]))
-            elif self.conditioning == "ic":
+            elif self.conditioning in ["ic", "in_context"]:
                 query_idx = (
                     curr_rng.choice(self.num_low_freq_classes, p=weights_low_freq)
                     + self.num_high_freq_classes
