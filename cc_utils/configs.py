@@ -15,7 +15,7 @@ EXPERIMENTS = {
             },
             {
                 "key": "num_low_freq_classes",
-                "values": [5, 50, 500, 5000]
+                "values": [1000000]
             }
         ]
     },
