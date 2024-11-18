@@ -58,7 +58,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += "#SBATCH --account={}\n".format(CC_ACCOUNT)
     sbatch_content += "#SBATCH --time={}\n".format(exp_config["eval_run_time"])
 
-    if exp_name.startswith("omniglot"):
+    if exp_name.startswith("omniglot") or "_tf_blocks" in exp_name:
         sbatch_content += "#SBATCH --cpus-per-task=6\n"
         sbatch_content += "#SBATCH --gres=gpu:1\n"
         sbatch_content += "#SBATCH --mem=24G\n"
@@ -71,7 +71,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
         os.path.join(RUN_REPORT_DIR, "baselines", exp_name)
     )
 
-    if exp_name.startswith("omniglot"):
+    if exp_name.startswith("omniglot") or "_tf_blocks" in exp_name:
         sbatch_content += "module load StdEnv/2023\n"
         sbatch_content += "module load python/3.10\n"
         sbatch_content += "module load cuda/12.2\n"
@@ -91,7 +91,7 @@ for exp_name, exp_config in EXPERIMENTS.items():
     sbatch_content += "echo ${learner_path} ${p_relevant_context} ${save_path}\n"
     sbatch_content += 'echo "Starting run at: `date`"\n'
 
-    if exp_name.startswith("omniglot"):
+    if exp_name.startswith("omniglot") or "_tf_blocks" in exp_name:
         sbatch_content += "tar xf $HOME/torch_datasets.tar -C $SLURM_TMPDIR\n"
         sbatch_content += "XLA_PYTHON_CLIENT_MEM_FRACTION=0.9 python3 {}/experiments/evaluation.py \\\n".format(REPO_PATH)
         sbatch_content += "  --device=gpu:0 \\\n"
