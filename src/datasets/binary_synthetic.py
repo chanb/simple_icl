@@ -52,18 +52,6 @@ class BinarySynthetic:
         self.flip_label = flip_label
         self.rng = np.random.RandomState(seed)
 
-        class_0_prototypes = self.rng.standard_normal(
-            size=(self.num_classes, self.num_dims)
-        )
-        class_0_prototypes /= np.linalg.norm(class_0_prototypes, axis=-1, keepdims=True)
-
-        class_1_prototypes = self.rng.standard_normal(
-            size=(self.num_classes, self.num_dims)
-        )
-        class_1_prototypes /= np.linalg.norm(class_1_prototypes, axis=-1, keepdims=True)
-
-        self.prototypes = np.stack((class_0_prototypes, class_1_prototypes))
-
     @property
     def input_space(self):
         return spaces.Box(-np.inf, np.inf, shape=(self.num_dims,))
@@ -85,6 +73,11 @@ class BinarySynthetic:
             1 / self.num_high_freq_classes
         ] * self.num_high_freq_classes
         weights_low_freq = [1 / self.num_low_freq_classes] * self.num_low_freq_classes
+
+        def create_example(seed):
+            example = np.random.RandomState(seed).standard_normal(self.num_dims)
+            example /= np.linalg.norm(example)
+            return example
 
         while True:
             sample_i = sample_rng.choice(self.dataset_size)
@@ -142,7 +135,9 @@ class BinarySynthetic:
             label = np.concatenate((context_labels, [target]))
 
             # Fetch prototypes
-            example = self.prototypes[label, prototype_idxes]
+            example = np.stack(
+                [create_example(prototype_idx) for prototype_idx in prototype_idxes]
+            ) * ((-1) ** label[:, None])
             example = (
                 example + curr_rng.standard_normal(example.shape) * self.input_noise_std
             )
