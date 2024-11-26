@@ -180,6 +180,31 @@ def get_synthetic_eval_datasets(
     }, configs
 
 
+def get_binary_synthetic_eval_datasets(
+    config_dict: Dict[str, Any],
+    test_data_seed: int,
+    context_len: int,
+    num_eval_samples: int,
+):
+    configs = dict()
+
+    for conditioning in ["none", "ic", "iw"]:
+        for flip_label in [True, False]:
+            eval_config_dict = copy.deepcopy(config_dict)
+
+            eval_config_dict["dataset_kwargs"]["dataset_size"] = num_eval_samples * 5
+            eval_config_dict["dataset_kwargs"]["train"] = False
+            eval_config_dict["dataset_kwargs"]["conditioning"] = conditioning
+            eval_config_dict["dataset_kwargs"]["flip_label"] = flip_label
+
+            eval_config = parse_dict(eval_config_dict)
+            configs["eval-{}{}".format(conditioning, "-flip_label" if flip_label else "")] = eval_config
+
+    return {
+        eval_name: get_data_loader(config) for eval_name, config in configs.items()
+    }, configs
+
+
 def main(args: SimpleNamespace):
     learner_path = args.learner_path
     save_path = args.save_path
@@ -239,6 +264,13 @@ def main(args: SimpleNamespace):
             p_relevant_context,
             False,
         )
+    elif config.dataset_name == "binary_synthetic":
+        datasets, dataset_configs = get_binary_synthetic_eval_datasets(
+            config_dict,
+            test_data_seed,
+            context_len,
+            num_eval_samples,
+        )
 
     train_ds, train_dataset = get_data_loader(
         config,
@@ -258,39 +290,36 @@ def main(args: SimpleNamespace):
             dataset_output_dim=dataset.output_space.n,
         )
 
-    try:
-        stats = {eval_name: dict() for eval_name in datasets}
-        checkpoint_steps = []
-        for params, model, checkpoint_step in tqdm(iterate_models(learner_path)):
-            checkpoint_steps.append(checkpoint_step)
-            sample_key = jrandom.fold_in(sample_key, checkpoint_step)
-            for eval_name in prefetched_data:
-                aux = evaluate(
-                    model=model,
-                    params=params,
-                    prefetched_data=prefetched_data[eval_name],
-                    max_label=None,
-                    sample_key=sample_key,
-                    fixed_length=fixed_length,
-                )
-                sample_key = jrandom.split(sample_key)[0]
+        del ds
+        del dataset
 
-                for aux_key in aux:
-                    stats[eval_name].setdefault(aux_key, [])
-                    stats[eval_name][aux_key].append(aux[aux_key])
+    stats = {eval_name: dict() for eval_name in prefetched_data}
+    checkpoint_steps = []
+    for params, model, checkpoint_step in tqdm(iterate_models(learner_path)):
+        checkpoint_steps.append(checkpoint_step)
+        sample_key = jrandom.fold_in(sample_key, checkpoint_step)
+        for eval_name in prefetched_data:
+            aux = evaluate(
+                model=model,
+                params=params,
+                prefetched_data=prefetched_data[eval_name],
+                max_label=None,
+                sample_key=sample_key,
+                fixed_length=fixed_length,
+            )
+            sample_key = jrandom.split(sample_key)[0]
 
-        pickle.dump(
-            {"checkpoint_steps": checkpoint_steps, "stats": stats},
-            open(
-                os.path.join(save_path, "{}.pkl".format(os.path.basename(learner_path))),
-                "wb",
-            ),
-        )
-    finally:
-        for eval_name in datasets:
-            data_loader, dataset = datasets[eval_name]
-            del data_loader
-            del dataset
+            for aux_key in aux:
+                stats[eval_name].setdefault(aux_key, [])
+                stats[eval_name][aux_key].append(aux[aux_key])
+
+    pickle.dump(
+        {"checkpoint_steps": checkpoint_steps, "stats": stats},
+        open(
+            os.path.join(save_path, "{}.pkl".format(os.path.basename(learner_path))),
+            "wb",
+        ),
+    )
 
 
 if __name__ == "__main__":

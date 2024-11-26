@@ -1,122 +1,254 @@
-# Simple ICL experiments
-# Alpha
+# # Binary Synthetic
 EXPERIMENTS = {
-    # "synthetic-alpha-noisy_inputs": {
-    #     "run_time": "00:30:00",
-    #     "num_seeds": 5,
-    #     "variants": [
-    #         {
-    #             "key": "dataset_size",
-    #             "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
-    #         },
-    #         {
-    #             "key": "p_relevant_context",
-    #             "values": [0.9]
-    #         },
-    #         {
-    #             "key": "input_noise_std",
-    #             "values": [0.0, 0.02, 0.2, 0.4]
-    #         }
-    #     ]
-    # },
-    # "synthetic-alpha-p_high": {
-    #     "run_time": "01:00:00",
-    #     "eval_run_time": "01:00:00",
-    #     "num_seeds": 5,
-    #     "variants": [
-    #         {
-    #             "key": "p_high",
-    #             "values": [0.5, 0.9, 0.99]
-    #         },
-    #         {
-    #             "key": "dataset_size",
-    #             "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
-    #         },
-    #         {
-    #             "key": "p_relevant_context",
-    #             "values": [0.9]
-    #         },
-    #     ]
-    # },
-    # "synthetic-alpha-num_low_freq": {
-    #     "run_time": "05:00:00",
-    #     "eval_run_time": "01:00:00",
-    #     "num_seeds": 5,
-    #     "variants": [
-    #         {
-    #             "key": "dataset_size",
-    #             "values": [2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
-    #         },
-    #         {
-    #             "key": "p_relevant_context",
-    #             "values": [0.9]
-    #         },
-    #         {
-    #             "key": "num_low_prob_classes",
-    #             "values": [5, 45, 95, 495]
-    #         }
-    #     ]
-    # },
-    # "synthetic-alpha-num_contexts": {
-    #     "run_time": "01:00:00",
-    #     "eval_run_time": "01:00:00",
-    #     "num_seeds": 5,
-    #     "variants": [
-    #         {
-    #             "key": "dataset_size",
-    #             "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
-    #         },
-    #         {
-    #             "key": "p_relevant_context",
-    #             "values": [0.9]
-    #         },
-    #         {
-    #             "key": "num_contexts",
-    #             "values": [1, 2, 4, 8]
-    #         }
-    #     ]
-    # },
+    "binary_synthetic-transformer-num_low_freq": {
+        "run_time": "06:00:00",
+        "eval_run_time": "01:00:00",
+        "num_seeds": 5,
+        "variants": [
+            {
+                "key": "dataset_size",
+                "values": [2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+            },
+            {
+                "key": "conditioning",
+                "values": ["none", "in_weight", "in_context"]
+            },
+            {
+                "key": "num_low_freq_classes",
+                "values": [1000000]
+            }
+        ]
+    },
 }
 
+# # Ablation with larger TF and longer context length
+# EXPERIMENTS = {
+#     "binary_synthetic-transformer-num_low_freq": {
+#         "run_time": "03:00:00",
+#         "eval_run_time": "01:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "conditioning",
+#                 "values": ["none", "in_weight", "in_context"]
+#             },
+#             {
+#                 "key": "num_low_freq_classes",
+#                 "values": [5, 50, 500, 5000]
+#             }
+#         ]
+#     },
+# }
+
+# # Ablation with larger TF and longer context length
+# EXPERIMENTS = {
+#     # "synthetic-transformer-8_tf_blocks-noisy_inputs": {
+#     #     "run_time": "06:00:00",
+#     #     "eval_run_time": "01:00:00",
+#     #     "num_seeds": 5,
+#     #     "variants": [
+#     #         {
+#     #             "key": "dataset_size",
+#     #             "values": [2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#     #         },
+#     #         {
+#     #             "key": "p_relevant_context",
+#     #             "values": [0.0, 0.9, 1.0]
+#     #         },
+#     #         {
+#     #             "key": "input_noise_std",
+#     #             "values": [0.0, 0.02, 0.2, 0.4]
+#     #         }
+#     #     ]
+#     # },
+#     "synthetic-transformer-4_tf_blocks-noisy_inputs": {
+#         "run_time": "23:59:00",
+#         "eval_run_time": "01:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**14, 2**16, 2**18, 2**20, 2**24]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [1.0]
+#             },
+#             {
+#                 "key": "input_noise_std",
+#                 "values": [0.0, 0.02, 0.2]
+#             }
+#         ]
+#     },
+# }
+
+# GRU experiments
+# EXPERIMENTS = {
+#     "synthetic-gru-noisy_inputs": {
+#         "run_time": "01:00:00",
+#         "eval_run_time": "01:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.0, 0.9, 1.0]
+#             },
+#             {
+#                 "key": "input_noise_std",
+#                 "values": [0.0, 0.02, 0.2, 0.4]
+#             }
+#         ]
+#     },
+# }
+
+# Simple ICL experiments
+# # Alpha
+# EXPERIMENTS = {
+#     "synthetic-alpha-noisy_inputs": {
+#         "run_time": "00:30:00",
+#         "eval_run_time": "01:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.9]
+#             },
+#             {
+#                 "key": "input_noise_std",
+#                 "values": [0.0, 0.02, 0.2, 0.4]
+#             }
+#         ]
+#     },
+#     "synthetic-alpha-p_high": {
+#         "run_time": "01:00:00",
+#         "eval_run_time": "01:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "p_high",
+#                 "values": [0.5, 0.9, 0.99]
+#             },
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.9]
+#             },
+#         ]
+#     },
+#     # "synthetic-alpha-num_low_freq": {
+#     #     "run_time": "05:00:00",
+#     #     "eval_run_time": "01:00:00",
+#     #     "num_seeds": 5,
+#     #     "variants": [
+#     #         {
+#     #             "key": "dataset_size",
+#     #             "values": [2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#     #         },
+#     #         {
+#     #             "key": "p_relevant_context",
+#     #             "values": [0.9]
+#     #         },
+#     #         {
+#     #             "key": "num_low_prob_classes",
+#     #             "values": [5, 45, 95, 495]
+#     #         }
+#     #     ]
+#     # },
+#     # "synthetic-e2e_alpha-num_low_freq": {
+#     #     "run_time": "05:00:00",
+#     #     "eval_run_time": "01:00:00",
+#     #     "num_seeds": 5,
+#     #     "variants": [
+#     #         {
+#     #             "key": "dataset_size",
+#     #             "values": [2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#     #         },
+#     #         {
+#     #             "key": "p_relevant_context",
+#     #             "values": [0.9]
+#     #         },
+#     #         {
+#     #             "key": "num_low_prob_classes",
+#     #             "values": [5, 45, 95, 495]
+#     #         }
+#     #     ]
+#     # },
+#     "synthetic-alpha-num_contexts": {
+#         "run_time": "01:00:00",
+#         "eval_run_time": "01:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.9]
+#             },
+#             {
+#                 "key": "num_contexts",
+#                 "values": [1, 2, 4, 8]
+#             }
+#         ]
+#     },
+# }
 
 # IW and IC predictors
-EXPERIMENTS = {
-    "synthetic-iw_predictor-noisy_inputs": {
-        "run_time": "00:30:00",
-        "num_seeds": 5,
-        "variants": [
-            {
-                "key": "dataset_size",
-                "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
-            },
-            {
-                "key": "p_relevant_context",
-                "values": [0.9]
-            },
-            {
-                "key": "input_noise_std",
-                "values": [0.0, 0.02, 0.2, 0.4]
-            }
-        ]
-    },
-    "synthetic-ic_predictor-noisy_inputs": {
-        "run_time": "00:30:00",
-        "num_seeds": 5,
-        "variants": [
-            {
-                "key": "dataset_size",
-                "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
-            },
-            {
-                "key": "p_relevant_context",
-                "values": [0.9]
-            },
-            {
-                "key": "input_noise_std",
-                "values": [0.0, 0.02, 0.2, 0.4]
-            }
-        ]
-    },
+# EXPERIMENTS = {
+#     "synthetic-iw_predictor-noisy_inputs": {
+#         "run_time": "00:30:00",
+#         "eval_run_time": "01:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.9]
+#             },
+#             {
+#                 "key": "input_noise_std",
+#                 "values": [0.0, 0.02, 0.2, 0.4]
+#             }
+#         ]
+#     },
+#     "synthetic-ic_predictor-noisy_inputs": {
+#         "run_time": "00:30:00",
+#         "eval_run_time": "01:00:00",
+#         "num_seeds": 5,
+#         "variants": [
+#             {
+#                 "key": "dataset_size",
+#                 "values": [2**6, 2**8, 2**10, 2**12, 2**14, 2**16, 2**18, 2**20]
+#             },
+#             {
+#                 "key": "p_relevant_context",
+#                 "values": [0.9]
+#             },
+#             {
+#                 "key": "input_noise_std",
+#                 "values": [0.0, 0.02, 0.2, 0.4]
+#             }
+#         ]
+#     },
     # "synthetic-iw_predictor-p_high": {
     #     "run_time": "01:00:00",
     #     "eval_run_time": "01:00:00",
@@ -231,7 +363,7 @@ EXPERIMENTS = {
     #         }
     #     ]
     # },
-}
+# }
 
 # Section 5.2
 # EXPERIMENTS = {
