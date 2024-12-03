@@ -10,8 +10,8 @@
         "model_kwargs": {
             "output_dim": 2,
             "num_contexts": 4,
-            "num_blocks": 2,
-            "num_heads": 1,
+            "num_blocks": 4,
+            "num_heads": 4,
             "embed_dim": 64,
             "widening_factor": 4,
             "query_pred_only": true
