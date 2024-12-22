@@ -16,6 +16,7 @@ import tensorflow_datasets as tfds
 
 import src.datasets.binary_synthetic as binary_synthetic
 import src.datasets.omniglot as omniglot
+import src.datasets.standard_basis as standard_basis
 import src.datasets.streamblock as streamblock
 import src.datasets.synthetic as synthetic
 
@@ -250,11 +251,44 @@ def get_binary_synthetic_seq_generator(
         seed,
         dataset_kwargs.train,
         getattr(dataset_kwargs, "conditioning", "none"),
-        getattr(dataset_kwargs, "example_space", "standard_basis"),
         getattr(dataset_kwargs, "input_noise_std", 0.0),
         getattr(dataset_kwargs, "label_noise", 0.0),
         getattr(dataset_kwargs, "num_relevant_contexts", None),
         getattr(dataset_kwargs, "flip_label", False),
+    )
+    num_classes = 2
+
+    dataset = tf.data.Dataset.from_generator(
+        task.get_sequences,
+        args=tuple(),
+        output_signature={
+            "example": tf.TensorSpec(
+                shape=(dataset_kwargs.num_contexts + 1, dataset_kwargs.num_dims),
+                dtype=tf.dtypes.float32,
+            ),
+            "label": tf.TensorSpec(
+                shape=(dataset_kwargs.num_contexts + 1, num_classes),
+                dtype=tf.dtypes.int32,
+            ),
+        },
+    )
+    return TFDataset(
+        dataset,
+        task.input_space,
+        task.output_space,
+    )
+
+
+def get_standard_basis_synthetic_seq_generator(
+    dataset_kwargs: SimpleNamespace,
+    seed: int,
+):
+    task = standard_basis.StandardBasisSynthetic(
+        dataset_kwargs.num_contexts,
+        dataset_kwargs.num_dims,
+        seed,
+        dataset_kwargs.train,
+        getattr(dataset_kwargs, "conditioning", "none"),
     )
     num_classes = 2
 
@@ -373,6 +407,10 @@ def get_data_loader(config: SimpleNamespace) -> Any:
             seq_generator = get_synthetic_seq_generator
         elif dataset_name == "binary_synthetic":
             seq_generator = get_binary_synthetic_seq_generator
+        elif dataset_name == "standard_basis":
+            seq_generator = get_standard_basis_synthetic_seq_generator
+        else:
+            raise NotImplementedError
 
         dataset = seq_generator(dataset_kwargs, config.seeds.data_seed)
         ds_seqs = dataset.dataset
