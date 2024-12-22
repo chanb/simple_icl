@@ -250,6 +250,7 @@ def get_binary_synthetic_seq_generator(
         seed,
         dataset_kwargs.train,
         getattr(dataset_kwargs, "conditioning", "none"),
+        getattr(dataset_kwargs, "example_space", "standard_basis"),
         getattr(dataset_kwargs, "input_noise_std", 0.0),
         getattr(dataset_kwargs, "label_noise", 0.0),
         getattr(dataset_kwargs, "num_relevant_contexts", None),

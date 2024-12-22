@@ -24,6 +24,7 @@ class BinarySynthetic:
         seed: int,
         train: bool,
         conditioning: str = "none",
+        example_space: str = "standard_basis",
         input_noise_std: float = 0.0,
         label_noise: float = 0.0,
         num_relevant_contexts: int = None,
@@ -50,6 +51,7 @@ class BinarySynthetic:
         self.num_relevant_contexts = num_relevant_contexts
         self.conditioning = conditioning
         self.flip_label = flip_label
+        self.example_space = example_space
         self.rng = np.random.RandomState(seed)
 
     @property
@@ -74,10 +76,15 @@ class BinarySynthetic:
         ] * self.num_high_freq_classes
         weights_low_freq = [1 / self.num_low_freq_classes] * self.num_low_freq_classes
 
-        def create_example(seed):
-            example = np.random.RandomState(seed).standard_normal(self.num_dims)
-            example /= np.linalg.norm(example)
-            return example
+        if self.example_space == "standard_basis":
+            def create_example(seed):
+                example = np.eye(self.num_dims)[np.random.RandomState(seed).randint(self.num_dims)]
+                return example
+        else:
+            def create_example(seed):
+                example = np.random.RandomState(seed).standard_normal(self.num_dims)
+                example /= np.linalg.norm(example)
+                return example
 
         while True:
             sample_i = sample_rng.choice(self.dataset_size)
