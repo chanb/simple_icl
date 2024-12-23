@@ -205,6 +205,34 @@ def get_binary_synthetic_eval_datasets(
     }, configs
 
 
+def get_standard_basis_eval_datasets(
+    config_dict: Dict[str, Any],
+    test_data_seed: int,
+    context_len: int,
+    num_eval_samples: int,
+):
+    configs = dict()
+
+    for conditioning in [
+        "none",
+        "ood_factor:0.5",
+        "ood_factor:0.9",
+        "simplex:2",
+    ]:
+        eval_config_dict = copy.deepcopy(config_dict)
+
+        eval_config_dict["dataset_kwargs"]["dataset_size"] = num_eval_samples * 5
+        eval_config_dict["dataset_kwargs"]["train"] = False
+        eval_config_dict["dataset_kwargs"]["conditioning"] = conditioning
+
+        eval_config = parse_dict(eval_config_dict)
+        configs["eval-{}".format(conditioning)] = eval_config
+
+    return {
+        eval_name: get_data_loader(config) for eval_name, config in configs.items()
+    }, configs
+
+
 def main(args: SimpleNamespace):
     learner_path = args.learner_path
     save_path = args.save_path
@@ -266,6 +294,13 @@ def main(args: SimpleNamespace):
         )
     elif config.dataset_name == "binary_synthetic":
         datasets, dataset_configs = get_binary_synthetic_eval_datasets(
+            config_dict,
+            test_data_seed,
+            context_len,
+            num_eval_samples,
+        )
+    elif config.dataset_name == "standard_basis":
+        datasets, dataset_configs = get_standard_basis_eval_datasets(
             config_dict,
             test_data_seed,
             context_len,
